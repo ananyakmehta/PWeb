@@ -50,10 +50,25 @@ const href = withBase(`projects/${block.slug}/`);
     transform: none;
   }
 
+  /* Slide in from the side rather than up — left-column cards (odd position in DOM
+     order, matching the 2-col grid's left track) come from the left, right-column
+     (even) from the right, so they read as entering from either side of the page
+     rather than all sharing one direction. Small distance + ease-out curve on
+     purpose: a minor ramp-in, not a swoop. */
   .project-card[data-reveal] {
     opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 600ms ease, transform 600ms ease;
+    transition: opacity 650ms cubic-bezier(0.16, 1, 0.3, 1), transform 650ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* :where() keeps these at the same specificity as [data-reveal] itself — without it,
+     :nth-child adds enough specificity to beat .is-visible's transform:none below, so
+     revealed cards would fade in but stay stuck at their offset forever. */
+  .project-card[data-reveal]:where(:nth-child(odd)) {
+    transform: translateX(-28px);
+  }
+
+  .project-card[data-reveal]:where(:nth-child(even)) {
+    transform: translateX(28px);
   }
 
   .project-card.is-visible {
