@@ -1,8 +1,21 @@
 ---
 // Page-length decorative overlay: paper planes (dotted loop-de-loop trails, "flying
-// in" from off the left/right screen edges), plus a couple of little astronauts
-// planting flags and a few sparse planets. All white-outline, low-opacity, restrained
-// — same visual language throughout, just three different motifs sharing one overlay.
+// in" from off the left/right screen edges), a couple of little astronauts planting
+// flags, and a few sparse planets. All white (currentColor), low-opacity, restrained.
+//
+// Icons are real line-art marks from UXWing (uxwing.com), not hand-drawn — free for
+// commercial use, no attribution required, modification permitted (checked their
+// license page directly before using anything from them). Paths pulled via curl and
+// verified visually (rendered + screenshotted) before integrating, same as the
+// LinkedIn/GitHub marks in Nav.astro — a wrong path renders as a garbled shape, not
+// something to trust from memory.
+//   - Plane:     https://uxwing.com/paper-plane-icon/
+//   - Astronaut: https://uxwing.com/astronaut-icon/
+//   - Flag:      https://uxwing.com/flag-icon/  (astronaut icon has no flag built in;
+//                composited alongside it below, proportions tuned by eye)
+//   - Planet:    https://uxwing.com/planet-saturn-space-icon/ — reused for all 3
+//                planet placements (varied size/opacity) rather than sourcing 3
+//                different designs; same reuse-with-variation approach as the planes.
 //
 // Not hero-scoped: placed as an absolutely-positioned (inset:0) child of a
 // position:relative wrapper around the WHOLE page's content (hero + project grid +
@@ -23,6 +36,33 @@
 // stacked mobile layout — these coordinates are authored against the wide desktop
 // layout's edges and wouldn't line up with anything sensible on a narrow viewport.
 import { buildLoopTrail } from '../lib/planeTrail';
+
+// Native viewBox 0 0 122.88 103.44. Nose tip sits ~15-20deg above the horizontal-right
+// axis at rest (checked by rendering it large with a crosshair overlay, not guessed) —
+// PLANE_ROTATION_OFFSET corrects for that so the icon's nose actually follows its
+// trail's direction of travel instead of trailing ~15-20deg off.
+const PLANE_PATH =
+  'M69.49,102.77L49.8,84.04l-20.23,18.27c-0.45,0.49-1.09,0.79-1.8,0.79c-1.35,0-2.44-1.09-2.44-2.44V60.77L0.76,37.41c-0.98-0.93-1.01-2.47-0.09-3.45c0.31-0.33,0.7-0.55,1.11-0.67l0,0l118-33.2c1.3-0.36,2.64,0.39,3.01,1.69c0.19,0.66,0.08,1.34-0.24,1.89l-49.2,98.42c-0.6,1.2-2.06,1.69-3.26,1.09C69.86,103.07,69.66,102.93,69.49,102.77L69.49,102.77L69.49,102.77z M46.26,80.68L30.21,65.42v29.76L46.26,80.68L46.26,80.68z M28.15,56.73l76.32-47.26L7.22,36.83L28.15,56.73L28.15,56.73z M114.43,9.03L31.79,60.19l38.67,36.78L114.43,9.03L114.43,9.03z';
+const PLANE_VIEWBOX_CENTER = { x: 61.44, y: 51.72 };
+const PLANE_ROTATION_OFFSET = 17;
+const PLANE_ICON_SCALE = 0.15;
+
+// Native viewBox 0 0 102.3 122.88.
+const ASTRONAUT_PATH =
+  'M77.35,12.15c3.77,4.38,6.39,9.86,7.7,15.69h5.61c1.48,0,2.82,0.6,3.79,1.58c0.97,0.97,1.58,2.31,1.58,3.79v33.13l0,0.01c0.54,0.42,1.06,0.88,1.55,1.36c2.92,2.92,4.73,6.94,4.73,11.37v19.68c0,4.43-1.81,8.45-4.73,11.37c-2.08,2.08-4.73,3.6-7.69,4.3v6.87c0,0.87-0.71,1.58-1.58,1.58H13.99c-0.87,0-1.58-0.71-1.58-1.58v-6.87c-2.96-0.7-5.61-2.22-7.69-4.3C1.81,107.21,0,103.19,0,98.76V79.09c0-4.35,1.75-8.31,4.58-11.21c0.44-0.45,0.9-0.87,1.39-1.27c-0.15-0.24-0.24-0.53-0.24-0.84V33.21c0-1.48,0.6-2.82,1.58-3.79c0.97-0.97,2.31-1.58,3.79-1.58h5.12c0.4-1.87,0.95-3.71,1.63-5.49C22.41,10.36,33.09,0.63,49.21,0.03c5.3-0.2,10.62,0.76,15.54,2.88C69.45,4.93,73.78,8.02,77.35,12.15L77.35,12.15z M76.46,87.06c1.69,0,3.06,1.37,3.06,3.06c0,1.69-1.37,3.06-3.06,3.06c-1.69,0-3.06-1.37-3.06-3.06C73.4,88.43,74.77,87.06,76.46,87.06L76.46,87.06z M64.81,87.06c1.69,0,3.06,1.37,3.06,3.06c0,1.69-1.37,3.06-3.06,3.06c-1.69,0-3.06-1.37-3.06-3.06C61.75,88.43,63.12,87.06,64.81,87.06L64.81,87.06z M23.55,82.28h17.52c1.79,0,3.25,1.46,3.25,3.25v16.05c0,1.79-1.46,3.25-3.25,3.25H23.55c-1.79,0-3.25-1.46-3.25-3.25V85.53C20.3,83.75,21.76,82.28,23.55,82.28L23.55,82.28z M55.19,22.22c-0.8-0.34-1.17-1.26-0.83-2.06c0.34-0.8,1.26-1.17,2.06-0.83c2.72,1.17,5.32,3.07,7.42,5.44c2.02,2.27,3.59,4.98,4.4,7.88c0.23,0.84-0.26,1.7-1.1,1.93c-0.84,0.23-1.7-0.26-1.93-1.1c-0.67-2.43-2-4.71-3.72-6.64C59.69,24.83,57.49,23.21,55.19,22.22L55.19,22.22z M69,19.73c2.73,3.4,4.59,7.14,5.59,10.93c1.04,3.93,1.15,7.91,0.32,11.64c-1.34,6.06-5.24,10.53-10.3,13.34c-3.99,2.22-8.7,3.41-13.43,3.54c-4.73,0.13-9.48-0.8-13.52-2.83c-5-2.5-8.94-6.66-10.53-12.53c-0.51-1.89-0.8-3.84-0.88-5.81c-0.23-5.65,1.29-11.45,4.35-16.24c3.07-4.8,7.69-8.59,13.65-10.2c1.69-0.46,3.49-0.74,5.41-0.81c3.64-0.15,7.29,0.56,10.66,2.13C63.57,14.4,66.55,16.68,69,19.73L69,19.73z M71.77,31.51c-0.89-3.36-2.55-6.68-4.99-9.72c-2.15-2.68-4.76-4.68-7.6-5.99c-2.98-1.38-6.2-2.01-9.4-1.88c-1.69,0.07-3.29,0.32-4.81,0.73c-5.23,1.41-9.27,4.73-11.96,8.93c-2.7,4.22-4.03,9.33-3.83,14.31c0.07,1.72,0.32,3.43,0.77,5.07c1.32,4.91,4.68,8.41,8.96,10.55c3.64,1.82,7.93,2.66,12.21,2.54c4.29-0.12,8.56-1.19,12.15-3.2c4.33-2.41,7.66-6.19,8.78-11.27C72.77,38.36,72.67,34.92,71.77,31.51L71.77,31.51z M85.63,30.99c0.31,2.17,0.44,4.36,0.39,6.54c-0.15,6.57-1.95,13.04-5.58,18.4c2.53,1.91,4.66,4.32,6.26,7.07c2.19,0.07,4.28,0.58,6.17,1.45V33.21c0-0.61-0.25-1.16-0.65-1.56c-0.4-0.4-0.96-0.65-1.56-0.65H85.63L85.63,30.99z M88.29,66.31c1.02,2.64,1.59,5.5,1.59,8.49v36.37c2.09-0.62,3.96-1.76,5.46-3.27c2.35-2.35,3.8-5.58,3.8-9.14V79.09c0-3.56-1.46-6.79-3.8-9.14C93.47,68.07,91.02,66.76,88.29,66.31L88.29,66.31z M12.42,111.17v-38c0-2.35,0.38-4.63,1.07-6.76c-2.57,0.53-4.88,1.84-6.65,3.66c-2.27,2.33-3.68,5.52-3.68,9.02v19.68c0,3.56,1.46,6.79,3.8,9.14C8.46,109.4,10.33,110.54,12.42,111.17L12.42,111.17z M14.9,63.04c0.06-0.12,0.12-0.23,0.18-0.34c1.51-2.78,3.61-5.2,6.12-7.1c-1.03-1.5-1.93-3.09-2.69-4.73c-2.02-4.39-3.06-9.23-3.16-14.12c-0.04-1.92,0.07-3.84,0.32-5.75H11.1c-0.61,0-1.16,0.25-1.56,0.65c-0.4,0.4-0.65,0.96-0.65,1.56v31.5C10.72,63.78,12.75,63.2,14.9,63.04L14.9,63.04z M86.73,114.85c-0.17,0.01-0.35,0.01-0.52,0.01H16.1c-0.18,0-0.35,0-0.52-0.01v4.88h71.16V114.85L86.73,114.85z M15.57,111.69c0.17,0.01,0.35,0.01,0.52,0.01H86.2c0.18,0,0.35,0,0.52-0.01V74.8c0-3.41-0.84-6.62-2.31-9.44c-1.42-2.72-3.44-5.09-5.88-6.93c-0.74,0.87-1.53,1.69-2.38,2.47c-2.95,2.71-6.5,4.78-10.61,6.19c-4.09,1.4-8.73,2.16-13.89,2.28c-13.15,0.31-22.59-4.3-28.54-11.28c-2.16,1.63-3.97,3.72-5.27,6.11c-1.45,2.66-2.28,5.72-2.28,8.96V111.69L15.57,111.69z M82.88,37.47c0.19-8.46-2.59-17.1-7.91-23.26c-3.24-3.76-7.18-6.56-11.47-8.41c-4.49-1.93-9.35-2.81-14.18-2.63c-14.66,0.55-24.37,9.4-28.52,20.3c-1.61,4.23-2.39,8.75-2.3,13.23c0.09,4.45,1.03,8.86,2.88,12.85c4.49,9.75,14.39,17.05,30.23,16.68c4.8-0.11,9.13-0.82,12.93-2.12c3.7-1.27,6.89-3.11,9.51-5.52C79.87,53.21,82.7,45.43,82.88,37.47L82.88,37.47z';
+
+// Native viewBox 0 0 116.333 122.88. No pole-holding pose on the astronaut, so this is
+// composited beside it rather than "held" — proportions (position/scale below) tuned
+// by eye to read as planted next to the figure, moon-landing style.
+const FLAG_PATH =
+  'M20.416,17.743c46.635-32.238,50.118,31.566,95.917-8.271v65.01c-43.681,39.279-53.104-24.185-95.917,8.068V17.743L20.416,17.743z M8.898,0c4.915,0,8.899,3.986,8.899,8.898c0,3.263-1.758,6.114-4.375,7.663h0.42v7.624v74.512v7.624h-0.42c2.617,1.549,4.375,3.574,4.375,7.662c0,4.087-3.984,8.896-8.899,8.896c-4.914,0-8.898-4.81-8.898-8.896c0-4.088,1.757-6.113,4.374-7.662H3.955v-7.624V24.185v-7.624h0.419C1.757,15.012,0,12.162,0,8.898C0,3.986,3.984,0,8.898,0L8.898,0z';
+const ASTRONAUT_VIEWBOX = '0 0 130 123';
+const FLAG_TRANSFORM = 'translate(86,14) scale(0.334)';
+
+// Native viewBox 0 0 122.88 97.05.
+const SATURN_PATH =
+  'M37.11,6.51A48.54,48.54,0,0,1,93,11.68l.27-.08c7-1.78,13.15-2.53,17.89-2.16,5.17.4,8.9,2.15,10.7,5.37,3.25,5.79-1.07,14.76-10.66,24.58-.58.59-1.19,1.19-1.81,1.8A48.53,48.53,0,0,1,30.12,85.64c-.85.22-1.69.42-2.51.61-13.36,3.07-23.25,2.07-26.5-3.72l0,0c-1.81-3.25-1.32-7.39,1.1-12.07,2.17-4.2,6-9,11.07-14l.21-.2A48.56,48.56,0,0,1,37.11,6.51Zm67.72,38.83A195.18,195.18,0,0,1,72.24,67.91l-.06,0A195.65,195.65,0,0,1,36,84a43.59,43.59,0,0,0,68.82-38.62Zm-80.59,26c3.39-.43,11.31-3.54,20.77-7.86,6.22-2.83,13-6.28,19.61-10s13-7.61,18.67-11.44c8.34-5.69,14.77-10.83,16.59-13.9q-.37-.7-.78-1.41A43.57,43.57,0,0,0,23.64,70.31l.6,1Z';
+const SATURN_VIEWBOX = '0 0 122.88 97.05';
 
 const PLANE_CONFIGS = [
   // left side — flying in from the left edge, heading right/inward
@@ -56,9 +96,9 @@ const ASTRONAUT_CONFIGS = [
 
 // 3 planets — "some", "very sparsely dispersed": widely spaced, low count on purpose.
 const PLANET_CONFIGS = [
-  { side: 'right', top: '8%', width: 46, opacity: 0.24, ringed: false },
-  { side: 'left', top: '45%', width: 60, opacity: 0.22, ringed: true },
-  { side: 'right', top: '86%', width: 40, opacity: 0.26, ringed: false },
+  { side: 'right', top: '8%', width: 46, opacity: 0.24 },
+  { side: 'left', top: '45%', width: 60, opacity: 0.22 },
+  { side: 'right', top: '86%', width: 40, opacity: 0.26 },
 ];
 ---
 
@@ -71,8 +111,10 @@ const PLANET_CONFIGS = [
         viewBox="0 0 90 60"
       >
         <path d={p.pathD} class="plane-trail" />
-        <g transform={`translate(${p.endX},${p.endY}) rotate(${p.endAngleDeg.toFixed(1)})`}>
-          <path class="plane-icon" d="M0,0 L-14,-6 L-8,0 L-14,6 Z M0,0 L-8,0" />
+        <g
+          transform={`translate(${p.endX},${p.endY}) rotate(${(p.endAngleDeg + PLANE_ROTATION_OFFSET).toFixed(1)}) scale(${PLANE_ICON_SCALE}) translate(${-PLANE_VIEWBOX_CENTER.x},${-PLANE_VIEWBOX_CENTER.y})`}
+        >
+          <path class="deco-icon" d={PLANE_PATH} />
         </g>
       </svg>
     ))
@@ -83,21 +125,12 @@ const PLANET_CONFIGS = [
       <svg
         class={`astronaut astronaut-${a.side}`}
         style={`top:${a.top}; ${a.side}:${Math.round(a.width * 0.1)}px; width:${a.width}px; opacity:${a.opacity}; ${a.flip ? 'transform:scaleX(-1);' : ''}`}
-        viewBox="0 0 40 50"
+        viewBox={ASTRONAUT_VIEWBOX}
       >
-        {/* helmet */}
-        <circle cx="20" cy="12" r="9" class="deco-line" />
-        {/* body/suit */}
-        <path d="M13 21 Q13 19 16 19 L24 19 Q27 19 27 21 L27 34 Q27 38 20 38 Q13 38 13 34 Z" class="deco-line" />
-        {/* legs */}
-        <path d="M16 38 L15 47 M24 38 L25 47" class="deco-line" />
-        {/* trailing arm */}
-        <path d="M13 25 Q9 27 9 31" class="deco-line" />
-        {/* arm raised to flag */}
-        <path d="M27 23 Q33 23 33 18" class="deco-line" />
-        {/* flag pole + pennant */}
-        <line x1="33" y1="18" x2="33" y2="4" class="deco-line" stroke-width="1" />
-        <path d="M33 4 L40 6 L33 9 Z" class="deco-fill" />
+        <path class="deco-icon" d={ASTRONAUT_PATH} />
+        <g transform={FLAG_TRANSFORM}>
+          <path class="deco-icon" d={FLAG_PATH} />
+        </g>
       </svg>
     ))
   }
@@ -107,19 +140,9 @@ const PLANET_CONFIGS = [
       <svg
         class={`planet planet-${p.side}`}
         style={`top:${p.top}; ${p.side}:${Math.round(p.width * 0.08)}px; width:${p.width}px; opacity:${p.opacity};`}
-        viewBox={p.ringed ? '0 0 50 34' : '0 0 40 40'}
+        viewBox={SATURN_VIEWBOX}
       >
-        {p.ringed ? (
-          <>
-            <circle cx="25" cy="17" r="10" class="deco-line" />
-            <ellipse cx="25" cy="17" rx="22" ry="5" class="deco-line" transform="rotate(-15 25 17)" />
-          </>
-        ) : (
-          <>
-            <circle cx="20" cy="20" r="14" class="deco-line" />
-            <path d="M8 20a12 12 0 0 0 12 12" class="deco-line deco-line-soft" />
-          </>
-        )}
+        <path class="deco-icon" d={SATURN_PATH} />
       </svg>
     ))
   }
@@ -150,31 +173,8 @@ const PLANET_CONFIGS = [
     stroke-dasharray: 1.5 4.5;
   }
 
-  .plane-icon {
-    fill: none;
-    stroke: #ffffff;
-    stroke-width: 1.3;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  .deco-line {
-    fill: none;
-    stroke: #ffffff;
-    stroke-width: 1.3;
-    stroke-linejoin: round;
-    stroke-linecap: round;
-  }
-
-  .deco-line-soft {
-    stroke-width: 0.8;
-    opacity: 0.6;
-  }
-
-  .deco-fill {
+  .deco-icon {
     fill: #ffffff;
-    stroke: none;
-    opacity: 0.85;
   }
 
   @media (max-width: 720px) {
