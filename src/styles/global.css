@@ -64,6 +64,12 @@ body {
   color: var(--page-text);
   font-family: var(--font-sans);
   scroll-behavior: smooth;
+  /* SpaceDecor's items intentionally bleed past their container's edge (see its own
+     comment on horizontal placement) — fine at wide viewports where page-body's
+     centering margin absorbs it, but below the 1200px breakpoint that margin is zero,
+     so the bleed would otherwise reach the true viewport edge and create a horizontal
+     scrollbar. This clips it there instead of suppressing the bleed itself. */
+  overflow-x: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
