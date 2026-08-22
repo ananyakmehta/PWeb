@@ -88,17 +88,27 @@ const PLANE_CONFIGS = [
   return { ...p, pathD, endAngleDeg, endX: p.end[0], endY: p.end[1] };
 });
 
-// 2 astronauts, "random" (asymmetric, not aligned with the plane rows) placements.
+// 3 astronauts (was 2), spread wider down the page — "random"/asymmetric, not aligned
+// with the plane rows.
 const ASTRONAUT_CONFIGS = [
-  { side: 'left', top: '15%', width: 58, opacity: 0.32, flip: false },
-  { side: 'right', top: '68%', width: 66, opacity: 0.3, flip: true },
+  { side: 'left', top: '8%', width: 58, opacity: 0.32, flip: false },
+  { side: 'right', top: '42%', width: 66, opacity: 0.3, flip: true },
+  { side: 'left', top: '80%', width: 60, opacity: 0.28, flip: false },
 ];
 
-// 3 planets — "some", "very sparsely dispersed": widely spaced, low count on purpose.
+// 6 planets (was 3) — "more", each a distinct slightly-transparent color per the 4
+// requested (cycling red/pink/purple/green across the 6 slots). Colors picked as soft/
+// muted versions rather than saturated primaries, to sit against the dark navy base
+// the same way the existing violet --accent does, and flagged here since exact hex
+// wasn't specified: red #e0736f, pink #e893c2, purple #a97fd1, green #6fd19a.
+const PLANET_COLORS = { red: '#e0736f', pink: '#e893c2', purple: '#a97fd1', green: '#6fd19a' };
 const PLANET_CONFIGS = [
-  { side: 'right', top: '8%', width: 46, opacity: 0.24 },
-  { side: 'left', top: '45%', width: 60, opacity: 0.22 },
-  { side: 'right', top: '86%', width: 40, opacity: 0.26 },
+  { side: 'right', top: '5%', width: 44, opacity: 0.34, color: PLANET_COLORS.red },
+  { side: 'left', top: '19%', width: 38, opacity: 0.3, color: PLANET_COLORS.pink },
+  { side: 'right', top: '36%', width: 50, opacity: 0.32, color: PLANET_COLORS.purple },
+  { side: 'left', top: '53%', width: 42, opacity: 0.28, color: PLANET_COLORS.green },
+  { side: 'right', top: '71%', width: 36, opacity: 0.3, color: PLANET_COLORS.pink },
+  { side: 'left', top: '90%', width: 46, opacity: 0.34, color: PLANET_COLORS.red },
 ];
 ---
 
@@ -142,7 +152,7 @@ const PLANET_CONFIGS = [
         style={`top:${p.top}; ${p.side}:${Math.round(p.width * 0.08)}px; width:${p.width}px; opacity:${p.opacity};`}
         viewBox={SATURN_VIEWBOX}
       >
-        <path class="deco-icon" d={SATURN_PATH} />
+        <path d={SATURN_PATH} style={`fill:${p.color};`} />
       </svg>
     ))
   }
