@@ -1,32 +1,39 @@
 /*
  * DD_v2.1.md §5.1/§5.4 — site-wide palette (open item, proposed here — NOT locked).
  *
- * §5.1 specifies the halftone's own base tone ("dark navy... not blinding, not
- * high-contrast") and its dot colors ("very slightly lighter than the navy
- * background... low contrast by design"), but leaves the exact hex to be proposed. The
- * rest of the palette (§5.4) was already open in v2 and stays open here — retuned
- * below to sit cohesively against the new navy base rather than the old near-black one
- * (--chip-bg in particular: it was a neutral grey against v2's near-black page, which
- * read a little muddy once the page itself became navy-toned, so it's shifted into the
- * same navy family as the halftone dots).
+ * --page-bg: RGB(5, 60, 87) per direct instruction — a richer, more saturated blue
+ * than the previous near-black navy. --halftone-dot is the *rest* (untouched) dot
+ * color, also per direct instruction: a pale, translucent near-white blue rather than
+ * a solid opaque tone, so it reads as a soft glow rather than a hard dot against the
+ * richer background — the alpha channel does real compositing work here (canvas
+ * fillStyle honors rgba() the same as any 2D context fill), not just a lighter solid
+ * color standing in for "translucent."
+ *
+ * The *touched* dot color is no longer a single --halftone-dot-lit value — per direct
+ * instruction it's now a rainbow reveal (like a scratch-off card: a fixed, randomized
+ * color is already "underneath" every dot position, revealed as the ripple passes
+ * over it), computed directly in ReactiveHalftoneBackground.svelte from each dot's own
+ * grid position via a deterministic hash → hue, at a shared saturation/lightness
+ * ("all the colors a little lighter, same shade, different hue" — pastel, not
+ * saturated-primary, rainbow). That's why there's no CSS var for it: it's inherently
+ * per-dot and computed, not a single swatch this file could hold.
  *
  * --page-bg IS the halftone's base tone — they're the same color by spec (§5.1: "the
  * site's one signature background element"), not a page background with a separate
- * effect layered on top. --halftone-dot / --halftone-dot-lit are read directly by
+ * effect layered on top. --halftone-dot is read directly by
  * ReactiveHalftoneBackground.svelte via getComputedStyle at runtime, so this file
- * stays the single source of truth for those colors rather than duplicating hex
- * strings into the component.
+ * stays the single source of truth for that color rather than duplicating the hex
+ * string into the component.
  *
  * Flag any of this for adjustment — it's all in one place specifically so it's cheap
  * to change.
  */
 :root {
-  --page-bg: #0d1b2e;
+  --page-bg: #053c57;
   --page-text: #e8e8ee;
   --page-text-dim: #9a9aa6;
 
-  --halftone-dot: #18293f;
-  --halftone-dot-lit: #27405e;
+  --halftone-dot: rgba(226, 240, 248, 0.38);
 
   --accent: #b79bd6;
   --accent-soft: #ded0f0;
