@@ -1,14 +1,32 @@
 ---
-// DD_v2.md §6 — full detail-page content, in the specified order. One shared template
-// for every project (§6's own framing: "one shared detail-page template, renders
-// sections based on which optional fields are present") — same
-// field-presence-drives-content approach v1 used for its inline blocks, just as a
-// plain Astro component now that there's no per-block theming or interactivity left
-// that would require Svelte.
+// Detail page redesign, direct instruction (not doc-governed) — referenced against
+// https://www.davisryan.tech/pocket-rocket for the heading treatment: a full-bleed,
+// darkened hero image with the title overlaid on top, rather than a plain image
+// followed by a separate heading. Below that: 4 alternating image/text sections
+// stacked vertically (image-right/text-left, then image-left/text-right, repeating) —
+// vertical rows here rather than the reference's own arrangement, per direct
+// instruction. Same slide-in reveal as the index page's project cards (shared via
+// src/lib/scrollReveal.ts), with each section's slide direction matching which side
+// its own image is on.
+//
+// SCOPE NOTE: this replaces the old images-array grid and the old
+// versions/currentWork/impact/links block-specific conditional content (§6 in
+// DD_v2/v2.1) — those don't have an obvious place in the new 4-section pattern, and
+// the sections here are uniform placeholder content across every project rather than
+// per-block-varied, matching "put 4 placeholder sections" rather than trying to
+// shoehorn the old per-project fields into the new layout. That real per-project data
+// (versions, currentWork, impact, links beyond the meta area) still exists in the
+// schema/content files — it's just not rendered on this page this pass. primaryDescription
+// is kept as a short intro blurb between the meta row and the sections, since it still
+// fits naturally and there was no reason to discard working content.
 import { Image } from 'astro:assets';
 import StatusDot from './StatusDot.svelte';
 import { getBlockAsset } from '../lib/blockAssets';
 import { withBase } from '../lib/url';
+import section1 from '../assets/sections/1.svg';
+import section2 from '../assets/sections/2.svg';
+import section3 from '../assets/sections/3.svg';
+import section4 from '../assets/sections/4.svg';
 
 interface Props {
   block: any;
@@ -17,28 +35,52 @@ interface Props {
 const { block } = Astro.props;
 
 const heroAsset = getBlockAsset(block.slug, block.heroImage.src);
-const supplementaryImages = (block.images ?? []).map((img: any) => ({
-  ...img,
-  asset: getBlockAsset(block.slug, img.src),
-}));
-
 const dateRange = `${block.dateStart} – ${block.dateEnd ?? 'Ongoing'}`;
 const allTags = [...block.typeTags, ...block.topicTags];
+
+// Placeholder content — same 4 sections for every project this pass, alternating
+// image side starting with image-right/text-left per the direct instruction.
+const SECTIONS = [
+  {
+    heading: '[Placeholder] Section One',
+    body: '[Placeholder copy] Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua — standing in for the real section copy.',
+    image: section1,
+    side: 'right',
+  },
+  {
+    heading: '[Placeholder] Section Two',
+    body: '[Placeholder copy] Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat — standing in for the real section copy.',
+    image: section2,
+    side: 'left',
+  },
+  {
+    heading: '[Placeholder] Section Three',
+    body: '[Placeholder copy] Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur — standing in for the real section copy.',
+    image: section3,
+    side: 'right',
+  },
+  {
+    heading: '[Placeholder] Section Four',
+    body: '[Placeholder copy] Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum — standing in for the real section copy.',
+    image: section4,
+    side: 'left',
+  },
+];
 ---
 
 <article class="project-detail">
-  <Image
-    src={heroAsset}
-    alt={block.heroImage.alt}
-    width={1400}
-    height={820}
-    class="hero-image"
-  />
+  <div class="detail-hero">
+    <Image src={heroAsset} alt={block.heroImage.alt} width={1800} height={900} class="detail-hero-image" />
+    <div class="detail-hero-overlay">
+      <h1>{block.title}</h1>
+    </div>
+  </div>
 
   <div class="detail-body">
-    <h1>{block.title}</h1>
-    <p class="date-range">{dateRange}</p>
-    <StatusDot status={block.status} />
+    <div class="meta-row">
+      <p class="date-range">{dateRange}</p>
+      <StatusDot status={block.status} />
+    </div>
 
     {
       allTags.length > 0 && (
@@ -52,75 +94,21 @@ const allTags = [...block.typeTags, ...block.topicTags];
 
     <p class="description">{block.primaryDescription}</p>
 
-    {
-      supplementaryImages.length > 0 && (
-        <div class={`image-grid count-${supplementaryImages.length}`}>
-          {supplementaryImages.map((img: any) => (
-            <figure>
-              <Image src={img.asset} alt={img.alt} width={800} height={500} />
-              {img.caption && <figcaption>{img.caption}</figcaption>}
-            </figure>
-          ))}
-        </div>
-      )
-    }
-
-    {
-      block.versions?.length ? (
-        <div class="versions-block">
-          <p class="current-version">
-            <strong>{block.versions[0].label}</strong>
-            {block.versions[0].specs && <span> — {block.versions[0].specs}</span>}
-            {(block.links?.length ?? 0) > 0 && (
-              <a class="inline-link" href={block.links[0].url}>
-                {block.links[0].label}
-              </a>
-            )}
-          </p>
-          {block.versions.length > 1 && (
-            <div class="previous-versions">
-              <p class="previous-versions-label">Previous versions</p>
-              <ul>
-                {block.versions.slice(1).map((v: any) => (
-                  <li>
-                    <strong>{v.label}</strong>
-                    {v.specs && <span> — {v.specs}</span>}
-                    {v.cadUrl && (
-                      <a class="inline-link" href={v.cadUrl}>
-                        CAD
-                      </a>
-                    )}
-                  </li>
-                ))}
-              </ul>
+    <div class="sections">
+      {
+        SECTIONS.map((s) => (
+          <div class={`detail-section side-${s.side}`} data-reveal>
+            <div class="detail-section-image">
+              <Image src={s.image} alt="" width={1000} height={750} />
             </div>
-          )}
-        </div>
-      ) : block.currentWork ? (
-        <p class="current-work">{block.currentWork}</p>
-      ) : block.impact ? (
-        <>
-          <p class="impact">{block.impact}</p>
-          {(block.links?.length ?? 0) > 0 && (
-            <div class="links-row">
-              {block.links.map((l: any) => (
-                <a class="inline-link" href={l.url}>
-                  {l.label}
-                </a>
-              ))}
+            <div class="detail-section-text">
+              <h2>{s.heading}</h2>
+              <p>{s.body}</p>
             </div>
-          )}
-        </>
-      ) : block.links?.length ? (
-        <div class="links-row">
-          {block.links.map((l: any) => (
-            <a class="inline-link" href={l.url}>
-              {l.label}
-            </a>
-          ))}
-        </div>
-      ) : null
-    }
+          </div>
+        ))
+      }
+    </div>
 
     {
       (block.tools?.length ?? 0) > 0 && (
@@ -138,25 +126,58 @@ const allTags = [...block.typeTags, ...block.topicTags];
 
 <style>
   .project-detail {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 1.5rem 1.5rem 4rem;
+    padding-bottom: 4rem;
   }
 
-  .hero-image {
+  /* Full-bleed, matching the index hero mosaic's own breakout — the detail page's
+     content body below is still constrained (see .detail-body), but the heading image
+     goes edge-to-edge for the same reason the reference page's hero does. */
+  .detail-hero {
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    height: 46vh;
+    min-height: 320px;
+    max-height: 520px;
+    overflow: hidden;
+  }
+
+  .detail-hero-image {
     width: 100%;
-    height: auto;
-    border-radius: 12px;
-    margin-bottom: 1.5rem;
+    height: 100%;
+    object-fit: cover;
   }
 
-  h1 {
-    margin: 0 0 0.3rem;
-    font-size: 2rem;
+  .detail-hero-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: flex-end;
+    background: linear-gradient(to top, rgba(4, 8, 14, 0.75), rgba(4, 8, 14, 0.15) 55%, rgba(4, 8, 14, 0.35));
+    padding: 2.5rem;
+  }
+
+  .detail-hero-overlay h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: 2.6rem;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  }
+
+  .detail-body {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 0;
+  }
+
+  .meta-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
   }
 
   .date-range {
-    margin: 0 0 0.5rem;
+    margin: 0;
     color: var(--page-text-dim);
     font-size: 0.9rem;
   }
@@ -181,100 +202,85 @@ const allTags = [...block.typeTags, ...block.topicTags];
     color: var(--page-text);
     line-height: 1.6;
     max-width: 65ch;
-    margin: 1rem 0;
+    margin: 1rem 0 0;
   }
 
-  .image-grid {
+  .sections {
+    margin-top: 1rem;
+  }
+
+  .detail-section {
     display: grid;
-    gap: 0.75rem;
-    margin: 1.5rem 0;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    margin: 5rem 0;
   }
 
-  .image-grid.count-1 {
-    grid-template-columns: minmax(0, 480px);
+  .detail-section.side-right .detail-section-image {
+    order: 2;
   }
 
-  .image-grid.count-2 {
-    grid-template-columns: repeat(2, 1fr);
+  .detail-section.side-right .detail-section-text {
+    order: 1;
   }
 
-  .image-grid.count-3 {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  @media (max-width: 640px) {
-    .image-grid.count-2,
-    .image-grid.count-3 {
-      grid-template-columns: 1fr;
-    }
-  }
-
-  .image-grid figure {
-    margin: 0;
-  }
-
-  .image-grid img {
+  .detail-section-image :global(img) {
     width: 100%;
     height: auto;
-    border-radius: 8px;
+    border-radius: 12px;
   }
 
-  .image-grid figcaption {
-    margin-top: 0.3rem;
-    font-size: 0.72rem;
-    color: var(--page-text-dim);
+  .detail-section-text h2 {
+    margin: 0 0 0.75rem;
+    font-size: 1.5rem;
   }
 
-  .current-work,
-  .impact {
-    color: var(--page-text);
-    line-height: 1.6;
-    max-width: 65ch;
-    margin: 1.5rem 0;
-  }
-
-  .current-version {
-    color: var(--page-text);
-    margin: 1.5rem 0 0.5rem;
-  }
-
-  .previous-versions {
-    color: var(--page-text-dim);
-    font-size: 0.9rem;
-  }
-
-  .previous-versions-label {
-    margin: 0 0 0.3rem;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-
-  .previous-versions ul {
-    list-style: none;
+  .detail-section-text p {
     margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
+    color: var(--page-text-dim);
+    line-height: 1.6;
   }
 
-  .links-row {
-    display: flex;
-    gap: 1rem;
-    margin: 1.5rem 0;
+  /* Same slide-in as the index page's project cards (§ ProjectCard.astro) — direction
+     matches which side this section's own image is on, so the motion reinforces the
+     layout rather than being arbitrary. Replayable via the shared IntersectionObserver
+     in src/lib/scrollReveal.ts (toggles past a 50% visibility threshold). */
+  .detail-section[data-reveal] {
+    opacity: 0;
+    transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1), transform 900ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .inline-link {
-    color: var(--accent);
-    text-decoration: underline;
-    text-underline-offset: 2px;
-    font-size: 0.9rem;
-    margin-left: 0.5rem;
+  .detail-section.side-right[data-reveal]:where(:not(.is-visible)) {
+    transform: translateX(36px);
   }
 
-  .links-row .inline-link {
-    margin-left: 0;
+  .detail-section.side-left[data-reveal]:where(:not(.is-visible)) {
+    transform: translateX(-36px);
+  }
+
+  .detail-section.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (max-width: 720px) {
+    .detail-hero-overlay h1 {
+      font-size: 1.9rem;
+    }
+
+    .detail-section {
+      grid-template-columns: 1fr;
+      gap: 1.25rem;
+      margin: 3rem 0;
+    }
+
+    .detail-section.side-right .detail-section-image,
+    .detail-section.side-right .detail-section-text,
+    .detail-section.side-left .detail-section-image,
+    .detail-section.side-left .detail-section-text {
+      order: initial;
+    }
   }
 
   .tools-row {
@@ -300,3 +306,8 @@ const allTags = [...block.typeTags, ...block.topicTags];
     color: var(--accent);
   }
 </style>
+
+<script>
+  import { initScrollReveal } from '../lib/scrollReveal';
+  initScrollReveal();
+</script>

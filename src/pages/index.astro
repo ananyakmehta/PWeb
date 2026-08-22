@@ -107,29 +107,8 @@ const otherBlocks = allBlocks
 </style>
 
 <script>
-  // DD_v2.md §4.4 — scroll-triggered fade/slide-in as cards enter viewport, standard
-  // IntersectionObserver pattern, no Svelte state needed (§1.1: prefer plain JS/Astro
-  // now that no large stateful island is required).
-  //
-  // Replayable: toggles .is-visible on a 50% visibility threshold rather than
-  // one-shot-then-unobserve, so a card slides back out once more than half of it has
-  // scrolled off (either edge) and slides back in when it crosses back past 50% —
-  // works the same scrolling down or back up since it's just tracking the ratio, not a
-  // direction.
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const cards = document.querySelectorAll('[data-reveal]');
-
-  if (reduced) {
-    cards.forEach((c) => c.classList.add('is-visible'));
-  } else {
-    const io = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          entry.target.classList.toggle('is-visible', entry.intersectionRatio >= 0.5);
-        }
-      },
-      { threshold: 0.5 }
-    );
-    cards.forEach((c) => io.observe(c));
-  }
+  // DD_v2.md §4.4 — scroll-triggered fade/slide-in as cards enter viewport. Shared with
+  // the project detail page's section reveal — see src/lib/scrollReveal.ts.
+  import { initScrollReveal } from '../lib/scrollReveal';
+  initScrollReveal();
 </script>
