@@ -1,15 +1,25 @@
 ---
-// DD_v2.1.md §4.1 — REVISED from v2: full 50/50 split hero (not a compact header), the
-// photo large and dominant on the left rather than a small inset avatar. Sits on the
-// reactive halftone background (§5.1) via the shared Layout.
+// Hero redesign: on load the hero is a full-viewport photo mosaic (irregular tile
+// sizes, hand-tiled to cover the screen edge-to-edge with no gaps — not a uniform
+// grid). Scrolling shrinks and "zooms out" the mosaic into a single-row rectangular
+// banner pinned near the top, at which point the pin releases and the description +
+// link row (previously paired with a headshot photo) continue below — no headshot
+// image anymore.
 //
-// RESPONSIVE CHOICE (flagged per the doc's explicit ask — "Claude Code's reasonable
-// call, flag which was chosen"): stacks at <=720px with the photo ON TOP and text
-// below. Reasoning: leading with the person's face reads better for a personal
-// portfolio than leading with a paragraph of filler text on a phone screen. Easy to
-// flip if the owner prefers text-first on mobile.
+// Progressive enhancement, not a single fixed implementation: the DOM/default CSS
+// renders the END state — the banner, laid out with plain flexbox, in normal document
+// flow — unconditionally. That's what a user gets with no JS, reduced motion, or a
+// narrow viewport. JS only *upgrades* it into the scroll-linked pinned mosaic when
+// motion is allowed and the viewport is wide enough (matches the same 720px breakpoint
+// used elsewhere for desktop-only effects) — it never has to invent a fallback after
+// the fact, the fallback is just what's already there before JS runs.
 import { Image } from 'astro:assets';
-import photo from '../assets/hero/photo.svg';
+import tileA from '../assets/hero/mosaic/A.svg';
+import tileB from '../assets/hero/mosaic/B.svg';
+import tileC from '../assets/hero/mosaic/C.svg';
+import tileD from '../assets/hero/mosaic/D.svg';
+import tileE from '../assets/hero/mosaic/E.svg';
+import tileF from '../assets/hero/mosaic/F.svg';
 
 const links = [
   { label: 'GitHub', href: '#' },
@@ -17,68 +27,138 @@ const links = [
   { label: 'Résumé', href: '#' },
   { label: 'Email', href: '#' },
 ];
+
+// Mosaic layout: a hand-tiled partition of a 6-col x 4-row grid into 6 rectangles of
+// varied size (no uniform grid, no gaps/overlaps — verified by hand). Banner layout:
+// the same 6 tiles as equal-width columns in a single row. JS interpolates each tile's
+// left/top/width/height between these two states as % of the mosaic frame's own
+// (also-interpolated) box — so as the frame itself shrinks from full-viewport down to
+// banner size, the tiles' percentage-based geometry naturally rescales with it.
+const TILE_CONFIGS = [
+  { id: 'A', src: tileA, mosaic: { left: 0, top: 0, width: 50, height: 50 } },
+  { id: 'B', src: tileB, mosaic: { left: 0, top: 50, width: 16.667, height: 50 } },
+  { id: 'C', src: tileC, mosaic: { left: 16.667, top: 50, width: 33.333, height: 50 } },
+  { id: 'D', src: tileD, mosaic: { left: 50, top: 0, width: 50, height: 25 } },
+  { id: 'E', src: tileE, mosaic: { left: 50, top: 25, width: 33.333, height: 75 } },
+  { id: 'F', src: tileF, mosaic: { left: 83.333, top: 25, width: 16.667, height: 75 } },
+].map((t, i) => ({
+  ...t,
+  banner: { left: i * 16.667, top: 0, width: 16.667, height: 100 },
+}));
 ---
 
-<header class="hero">
-  <div class="hero-photo-col">
-    <Image
-      src={photo}
-      alt="Placeholder profile photo"
-      width={1000}
-      height={1250}
-      class="hero-photo"
-    />
-  </div>
-
-  <div class="hero-text-col">
-    <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
-    <p class="filler">
-      [Placeholder text] Line two of the filler bio goes here, casual in tone rather
-      than a LinkedIn headline.
-    </p>
-    <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
-
-    <nav class="link-row" aria-label="Contact and profile links">
+<div class="hero-pinzone" id="heroPinzone">
+  <div class="hero-sticky">
+    <div class="mosaic-frame" id="mosaicFrame">
       {
-        links.map((l) => (
-          <a href={l.href} class="link-pill">
-            {l.label}
-          </a>
+        TILE_CONFIGS.map((t) => (
+          <div
+            class="mosaic-tile"
+            data-tile={t.id}
+            data-mosaic={JSON.stringify(t.mosaic)}
+            data-banner={JSON.stringify(t.banner)}
+          >
+            <Image src={t.src} alt="" width={900} height={700} />
+          </div>
         ))
       }
-    </nav>
+    </div>
   </div>
-</header>
+</div>
+
+<section class="hero-copy">
+  <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
+  <p class="filler">
+    [Placeholder text] Line two of the filler bio goes here, casual in tone rather than
+    a LinkedIn headline.
+  </p>
+  <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
+
+  <nav class="link-row" aria-label="Contact and profile links">
+    {
+      links.map((l) => (
+        <a href={l.href} class="link-pill">
+          {l.label}
+        </a>
+      ))
+    }
+  </nav>
+</section>
 
 <style>
-  .hero {
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: center;
-    gap: 3rem;
-    min-height: 82vh;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem 1.5rem;
-  }
-
-  .hero-photo-col {
-    height: 100%;
-    display: flex;
-    align-items: center;
-  }
-
-  .hero-photo {
-    width: 100%;
+  /* Default / fallback state: a plain static banner, in normal flow, no JS required.
+     This is what no-JS, reduced-motion, and mobile all get. */
+  .hero-pinzone {
     height: auto;
-    max-height: 74vh;
-    object-fit: cover;
-    border-radius: 16px;
+    /* Breakout: index.astro nests Hero inside .page-body's max-width:1200px wrapper
+       (for PlaneField's positioning), but the mosaic needs to span the TRUE viewport
+       edge-to-edge at progress 0, not just 1200px. This standard full-bleed trick
+       extends it back to the real viewport width regardless of the ancestor's
+       constraint; .mosaic-frame's own max-width:1200px (below) still keeps the
+       fallback/end-state banner correctly centered within it. */
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
   }
 
-  .hero-text-col {
+  .hero-sticky {
+    position: static;
+    height: auto;
+  }
+
+  .mosaic-frame {
     position: relative;
+    display: flex;
+    width: 100%;
+    max-width: 1200px;
+    height: 280px;
+    margin: 2rem auto 0;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .mosaic-tile {
+    position: relative;
+    flex: 1;
+  }
+
+  .mosaic-tile :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* JS-enhanced state (class added by the script below, only when motion is allowed
+     and the viewport is wide enough): tall scroll runway + sticky pin + absolute,
+     JS-controlled tile geometry. */
+  .hero-pinzone.mosaic-live {
+    height: 200vh;
+  }
+
+  .hero-pinzone.mosaic-live .hero-sticky {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .hero-pinzone.mosaic-live .mosaic-frame {
+    position: absolute;
+    display: block;
+    max-width: none;
+    margin: 0;
+    /* top/left/width/height/border-radius set inline by the script, every frame */
+  }
+
+  .hero-pinzone.mosaic-live .mosaic-tile {
+    position: absolute;
+    /* left/top/width/height set inline by the script, every frame */
+  }
+
+  .hero-copy {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
   }
 
   h1 {
@@ -116,29 +196,99 @@ const links = [
     background: var(--chip-bg-hover);
     color: var(--chip-text-hover);
   }
+</style>
 
-  @media (max-width: 720px) {
-    .hero {
-      grid-template-columns: 1fr;
-      min-height: auto;
-      gap: 1.75rem;
-      padding: 1.5rem 1.5rem 2.5rem;
-    }
+<script>
+  // Progressive-enhancement gate: only switch into the scroll-linked pin/mosaic mode
+  // when motion is allowed AND the viewport is wide enough (matches the 720px
+  // breakpoint used elsewhere for desktop-only effects — position:sticky + dynamic
+  // viewport-height math is exactly the kind of thing that gets unreliable on mobile
+  // Safari's address-bar-driven 100vh changes, so it isn't worth chasing there).
+  const pinzone = document.getElementById('heroPinzone');
+  const frame = document.getElementById('mosaicFrame');
+  if (!pinzone || !frame) throw new Error('Hero mosaic: expected elements not found');
 
-    .hero-photo-col {
-      order: 1;
-    }
+  const tiles = Array.from(frame.querySelectorAll('.mosaic-tile'));
+  const tileData = tiles.map((el) => ({
+    el,
+    mosaic: JSON.parse(el.dataset.mosaic ?? '{}'),
+    banner: JSON.parse(el.dataset.banner ?? '{}'),
+  }));
 
-    .hero-photo {
-      max-height: 50vh;
-    }
+  const motionOk = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const widthOk = () => window.innerWidth > 720;
 
-    .hero-text-col {
-      order: 2;
-    }
+  function lerp(a, b, t) {
+    return a + (b - a) * t;
+  }
 
-    h1 {
-      font-size: 1.9rem;
+  function easeInOutCubic(t) {
+    return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+  }
+
+  function update() {
+    const rect = pinzone.getBoundingClientRect();
+    const scrollableHeight = pinzone.offsetHeight - window.innerHeight;
+    const raw = scrollableHeight > 0 ? -rect.top / scrollableHeight : 1;
+    const progress = Math.min(1, Math.max(0, raw));
+    const eased = easeInOutCubic(progress);
+
+    const navHeight = 64;
+    const bannerHeight = 280;
+    const bannerMaxWidth = Math.min(1200, window.innerWidth - 48);
+    const bannerLeft = (window.innerWidth - bannerMaxWidth) / 2;
+    const bannerTop = navHeight + 32;
+
+    frame.style.top = `${lerp(0, bannerTop, eased)}px`;
+    frame.style.left = `${lerp(0, bannerLeft, eased)}px`;
+    frame.style.width = `${lerp(window.innerWidth, bannerMaxWidth, eased)}px`;
+    frame.style.height = `${lerp(window.innerHeight, bannerHeight, eased)}px`;
+    frame.style.borderRadius = `${lerp(0, 16, eased)}px`;
+
+    for (const t of tileData) {
+      t.el.style.left = `${lerp(t.mosaic.left, t.banner.left, eased)}%`;
+      t.el.style.top = `${lerp(t.mosaic.top, t.banner.top, eased)}%`;
+      t.el.style.width = `${lerp(t.mosaic.width, t.banner.width, eased)}%`;
+      t.el.style.height = `${lerp(t.mosaic.height, t.banner.height, eased)}%`;
     }
   }
-</style>
+
+  let liveMode = false;
+  let ticking = false;
+
+  function onScroll() {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        update();
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }
+
+  function syncMode() {
+    const shouldBeLive = motionOk() && widthOk();
+    if (shouldBeLive === liveMode) return;
+    liveMode = shouldBeLive;
+
+    if (liveMode) {
+      pinzone.classList.add('mosaic-live');
+      window.addEventListener('scroll', onScroll, { passive: true });
+      update();
+    } else {
+      pinzone.classList.remove('mosaic-live');
+      window.removeEventListener('scroll', onScroll);
+      frame.removeAttribute('style');
+      for (const t of tileData) t.el.removeAttribute('style');
+    }
+  }
+
+  syncMode();
+  window.addEventListener('resize', () => {
+    syncMode();
+    if (liveMode) update();
+  });
+  window
+    .matchMedia('(prefers-reduced-motion: reduce)')
+    .addEventListener('change', syncMode);
+</script>
