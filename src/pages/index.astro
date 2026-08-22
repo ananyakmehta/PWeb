@@ -1,0 +1,54 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import FeedIsland from '../components/FeedIsland.svelte';
+import { resolveBlockImages } from '../lib/resolveBlockImages';
+import { blockThemes } from '../config/blockThemes';
+import { typeTagMeta, topicTagMeta } from '../data/tagMeta';
+
+const allBlocks = await getCollection('blocks');
+
+async function toPlainBlock(entry) {
+  const d = entry.data;
+  return {
+    title: d.title,
+    slug: d.slug,
+    status: d.status,
+    dateStart: d.dateStart,
+    dateEnd: d.dateEnd,
+    typeTags: d.typeTags,
+    topicTags: d.topicTags,
+    primaryDescription: d.primaryDescription,
+    links: d.links,
+    tools: d.tools,
+    versions: d.versions,
+    currentWork: d.currentWork,
+    impact: d.impact,
+    theme: d.theme,
+    images: await resolveBlockImages(d.slug, d.images),
+  };
+}
+
+const mainBlocksRaw = allBlocks
+  .filter((b) => !b.data.isOther)
+  .sort((a, b) => a.data.priority - b.data.priority);
+const otherBlocksRaw = allBlocks
+  .filter((b) => b.data.isOther)
+  .sort((a, b) => a.data.priority - b.data.priority);
+
+const mainBlocks = await Promise.all(mainBlocksRaw.map(toPlainBlock));
+const otherBlocks = await Promise.all(otherBlocksRaw.map(toPlainBlock));
+---
+
+<Base title="PWeb — Layout Pilot">
+  <Hero />
+  <FeedIsland
+    client:load
+    {mainBlocks}
+    {otherBlocks}
+    themes={blockThemes}
+    {typeTagMeta}
+    {topicTagMeta}
+  />
+</Base>

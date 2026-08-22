@@ -1,0 +1,33 @@
+---
+import '../styles/global.css';
+import ConstellationBackground from '../components/ConstellationBackground.astro';
+import CursorSystem from '../components/CursorSystem.svelte';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <ConstellationBackground />
+    <CursorSystem client:load />
+    <div class="page-content">
+      <slot />
+    </div>
+  </body>
+</html>
+
+<style>
+  .page-content {
+    position: relative;
+    z-index: 1;
+  }
+</style>

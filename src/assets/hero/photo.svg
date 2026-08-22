@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480">
+  <rect width="480" height="480" fill="#44444e"/>
+  <circle cx="240" cy="190" r="90" fill="#5c5c68"/>
+  <path d="M80 460 C80 340 400 340 400 460 Z" fill="#5c5c68"/>
+  <text x="50%" y="94%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="#c4c4cc">PLACEHOLDER PHOTO</text>
+</svg>
