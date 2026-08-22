@@ -41,12 +41,13 @@
   --status-paused: #e0b23c;
 
   /*
-   * DD_v2.1.md §5.3 — display face is Arvo (loaded below via Google Fonts, weights
-   * 400/700), used with restraint on titles/headings/nav only — never dense body text.
-   * Body face is the existing plain sans-serif stack, kept deliberately un-fancy for
-   * readability at paragraph sizes (the doc's own framing: "explicitly not Arvo").
+   * Display face is Raleway (swapped from Arvo per direct instruction; loaded below
+   * via Google Fonts, weights 400/600/700), used with restraint on titles/headings/nav
+   * only — never dense body text. Body face is the existing plain sans-serif stack,
+   * kept deliberately distinct from the display face for readability at paragraph
+   * sizes.
    */
-  --font-display: 'Arvo', 'Roboto Slab', 'Zilla Slab', serif;
+  --font-display: 'Raleway', 'Poppins', 'Helvetica Neue', sans-serif;
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
