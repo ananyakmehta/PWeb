@@ -14,6 +14,7 @@ import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import ProjectCard from '../components/ProjectCard.astro';
+import PlaneField from '../components/PlaneField.astro';
 
 const allBlocks = await getCollection('blocks');
 
@@ -29,31 +30,44 @@ const otherBlocks = allBlocks
 ---
 
 <Layout title="PWeb — Layout Pilot">
-  <Hero />
+  <div class="page-body">
+    <PlaneField />
 
-  <section id="projects" class="project-list">
-    {mainBlocks.map((block) => <ProjectCard block={block} />)}
-  </section>
+    <Hero />
 
-  {
-    otherBlocks.length > 0 && (
-      <>
-        <div class="other-divider" role="separator">
-          <span class="line" />
-          <span class="label">Other</span>
-          <span class="line" />
-        </div>
-        <section class="project-list other-list">
-          {otherBlocks.map((block) => (
-            <ProjectCard block={block} />
-          ))}
-        </section>
-      </>
-    )
-  }
+    <section id="projects" class="project-list">
+      {mainBlocks.map((block) => <ProjectCard block={block} />)}
+    </section>
+
+    {
+      otherBlocks.length > 0 && (
+        <>
+          <div class="other-divider" role="separator">
+            <span class="line" />
+            <span class="label">Other</span>
+            <span class="line" />
+          </div>
+          <section class="project-list other-list">
+            {otherBlocks.map((block) => (
+              <ProjectCard block={block} />
+            ))}
+          </section>
+        </>
+      )
+    }
+  </div>
 </Layout>
 
 <style>
+  .page-body {
+    /* Positioning context + width constraint for PlaneField's page-length overlay —
+       see PlaneField.astro's own comment for why this needs a max-width rather than
+       spanning the true viewport edge-to-edge. */
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
   .project-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
