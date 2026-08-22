@@ -1,0 +1,38 @@
+---
+// Required attribution for the floating-astronaut decoration in SpaceDecor.astro —
+// the one icon on this site that isn't from a no-attribution source (UXWing/Simple
+// Icons). Noun Project's standard format: "[Icon Name]" by [Creator] from Noun
+// Project, both the icon title and "Noun Project" hyperlinked back.
+// https://help.thenounproject.com/hc/en-us/articles/200509928
+---
+
+<footer class="site-footer">
+  <p class="credit">
+    <a href="https://thenounproject.com/icon/floating-astronaut-7644785/" target="_blank" rel="noopener noreferrer">"Floating Astronaut"</a> by Andy Horvath from <a href="https://thenounproject.com" target="_blank" rel="noopener noreferrer">Noun Project</a> (CC BY 3.0)
+  </p>
+</footer>
+
+<style>
+  .site-footer {
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .credit {
+    margin: 0;
+    font-size: 0.72rem;
+    color: var(--page-text-dim);
+  }
+
+  .credit a {
+    color: var(--page-text-dim);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .credit a:hover {
+    color: var(--accent);
+  }
+</style>

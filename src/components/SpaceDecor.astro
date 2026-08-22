@@ -1,20 +1,27 @@
 ---
 // Page-length decorative overlay: paper planes (dotted loop-de-loop trails, "flying
-// in" from off the left/right screen edges), a couple of little astronauts planting
-// flags, and a few sparse planets. All white (currentColor), low-opacity, restrained.
+// in" from off the left/right screen edges), a few little astronauts tumbling through
+// space with flags, and several sparse, colored planets. Low-opacity, restrained.
 //
-// Icons are real line-art marks from UXWing (uxwing.com), not hand-drawn — free for
-// commercial use, no attribution required, modification permitted (checked their
-// license page directly before using anything from them). Paths pulled via curl and
-// verified visually (rendered + screenshotted) before integrating, same as the
-// LinkedIn/GitHub marks in Nav.astro — a wrong path renders as a garbled shape, not
-// something to trust from memory.
-//   - Plane:     https://uxwing.com/paper-plane-icon/
-//   - Astronaut: https://uxwing.com/astronaut-icon/
-//   - Flag:      https://uxwing.com/flag-icon/  (astronaut icon has no flag built in;
+// Icons are real marks, not hand-drawn — verified visually (rendered + screenshotted)
+// before integrating in every case, since a wrong path/asset renders as a garbled
+// shape, not something to trust from memory.
+//   - Plane:     https://uxwing.com/paper-plane-icon/ (UXWing — no attribution needed)
+//   - Astronaut: https://thenounproject.com/icon/floating-astronaut-7644785/ by Andy
+//                Horvath, CC BY 3.0 — the one asset on this site that requires
+//                attribution (credited in Footer.astro). Searched UXWing/Flaticon/SVG
+//                Repo/Reshot/Tabler/unDraw/freesvg.org first for a no-attribution
+//                non-standing pose; none existed in a style that fit (either only a
+//                standing pose, attribution-required, or colorful clipart/illustration
+//                style that clashes with everything else here) — this was the only
+//                actual match for "not standing" in a compatible monochrome style, and
+//                it's PNG raster (Noun Project gates SVG behind a paid API), not SVG
+//                like everything else in this file — tinted white via CSS filter
+//                (brightness(0) invert(1)) rather than currentColor/fill.
+//   - Flag:      https://uxwing.com/flag-icon/  (astronaut has no flag built in;
 //                composited alongside it below, proportions tuned by eye)
-//   - Planet:    https://uxwing.com/planet-saturn-space-icon/ — reused for all 3
-//                planet placements (varied size/opacity) rather than sourcing 3
+//   - Planet:    https://uxwing.com/planet-saturn-space-icon/ — reused for all 6
+//                planet placements (varied size/opacity/color) rather than sourcing 6
 //                different designs; same reuse-with-variation approach as the planes.
 //
 // Not hero-scoped: placed as an absolutely-positioned (inset:0) child of a
@@ -35,7 +42,9 @@
 // Desktop-only: hidden below 720px, the same breakpoint where the hero collapses to a
 // stacked mobile layout — these coordinates are authored against the wide desktop
 // layout's edges and wouldn't line up with anything sensible on a narrow viewport.
+import { Image } from 'astro:assets';
 import { buildLoopTrail } from '../lib/planeTrail';
+import astronautFloating from '../assets/decor/astronaut-floating.png';
 
 // Native viewBox 0 0 122.88 103.44. Nose tip sits ~15-20deg above the horizontal-right
 // axis at rest (checked by rendering it large with a crosshair overlay, not guessed) —
@@ -47,17 +56,13 @@ const PLANE_VIEWBOX_CENTER = { x: 61.44, y: 51.72 };
 const PLANE_ROTATION_OFFSET = 17;
 const PLANE_ICON_SCALE = 0.15;
 
-// Native viewBox 0 0 102.3 122.88.
-const ASTRONAUT_PATH =
-  'M77.35,12.15c3.77,4.38,6.39,9.86,7.7,15.69h5.61c1.48,0,2.82,0.6,3.79,1.58c0.97,0.97,1.58,2.31,1.58,3.79v33.13l0,0.01c0.54,0.42,1.06,0.88,1.55,1.36c2.92,2.92,4.73,6.94,4.73,11.37v19.68c0,4.43-1.81,8.45-4.73,11.37c-2.08,2.08-4.73,3.6-7.69,4.3v6.87c0,0.87-0.71,1.58-1.58,1.58H13.99c-0.87,0-1.58-0.71-1.58-1.58v-6.87c-2.96-0.7-5.61-2.22-7.69-4.3C1.81,107.21,0,103.19,0,98.76V79.09c0-4.35,1.75-8.31,4.58-11.21c0.44-0.45,0.9-0.87,1.39-1.27c-0.15-0.24-0.24-0.53-0.24-0.84V33.21c0-1.48,0.6-2.82,1.58-3.79c0.97-0.97,2.31-1.58,3.79-1.58h5.12c0.4-1.87,0.95-3.71,1.63-5.49C22.41,10.36,33.09,0.63,49.21,0.03c5.3-0.2,10.62,0.76,15.54,2.88C69.45,4.93,73.78,8.02,77.35,12.15L77.35,12.15z M76.46,87.06c1.69,0,3.06,1.37,3.06,3.06c0,1.69-1.37,3.06-3.06,3.06c-1.69,0-3.06-1.37-3.06-3.06C73.4,88.43,74.77,87.06,76.46,87.06L76.46,87.06z M64.81,87.06c1.69,0,3.06,1.37,3.06,3.06c0,1.69-1.37,3.06-3.06,3.06c-1.69,0-3.06-1.37-3.06-3.06C61.75,88.43,63.12,87.06,64.81,87.06L64.81,87.06z M23.55,82.28h17.52c1.79,0,3.25,1.46,3.25,3.25v16.05c0,1.79-1.46,3.25-3.25,3.25H23.55c-1.79,0-3.25-1.46-3.25-3.25V85.53C20.3,83.75,21.76,82.28,23.55,82.28L23.55,82.28z M55.19,22.22c-0.8-0.34-1.17-1.26-0.83-2.06c0.34-0.8,1.26-1.17,2.06-0.83c2.72,1.17,5.32,3.07,7.42,5.44c2.02,2.27,3.59,4.98,4.4,7.88c0.23,0.84-0.26,1.7-1.1,1.93c-0.84,0.23-1.7-0.26-1.93-1.1c-0.67-2.43-2-4.71-3.72-6.64C59.69,24.83,57.49,23.21,55.19,22.22L55.19,22.22z M69,19.73c2.73,3.4,4.59,7.14,5.59,10.93c1.04,3.93,1.15,7.91,0.32,11.64c-1.34,6.06-5.24,10.53-10.3,13.34c-3.99,2.22-8.7,3.41-13.43,3.54c-4.73,0.13-9.48-0.8-13.52-2.83c-5-2.5-8.94-6.66-10.53-12.53c-0.51-1.89-0.8-3.84-0.88-5.81c-0.23-5.65,1.29-11.45,4.35-16.24c3.07-4.8,7.69-8.59,13.65-10.2c1.69-0.46,3.49-0.74,5.41-0.81c3.64-0.15,7.29,0.56,10.66,2.13C63.57,14.4,66.55,16.68,69,19.73L69,19.73z M71.77,31.51c-0.89-3.36-2.55-6.68-4.99-9.72c-2.15-2.68-4.76-4.68-7.6-5.99c-2.98-1.38-6.2-2.01-9.4-1.88c-1.69,0.07-3.29,0.32-4.81,0.73c-5.23,1.41-9.27,4.73-11.96,8.93c-2.7,4.22-4.03,9.33-3.83,14.31c0.07,1.72,0.32,3.43,0.77,5.07c1.32,4.91,4.68,8.41,8.96,10.55c3.64,1.82,7.93,2.66,12.21,2.54c4.29-0.12,8.56-1.19,12.15-3.2c4.33-2.41,7.66-6.19,8.78-11.27C72.77,38.36,72.67,34.92,71.77,31.51L71.77,31.51z M85.63,30.99c0.31,2.17,0.44,4.36,0.39,6.54c-0.15,6.57-1.95,13.04-5.58,18.4c2.53,1.91,4.66,4.32,6.26,7.07c2.19,0.07,4.28,0.58,6.17,1.45V33.21c0-0.61-0.25-1.16-0.65-1.56c-0.4-0.4-0.96-0.65-1.56-0.65H85.63L85.63,30.99z M88.29,66.31c1.02,2.64,1.59,5.5,1.59,8.49v36.37c2.09-0.62,3.96-1.76,5.46-3.27c2.35-2.35,3.8-5.58,3.8-9.14V79.09c0-3.56-1.46-6.79-3.8-9.14C93.47,68.07,91.02,66.76,88.29,66.31L88.29,66.31z M12.42,111.17v-38c0-2.35,0.38-4.63,1.07-6.76c-2.57,0.53-4.88,1.84-6.65,3.66c-2.27,2.33-3.68,5.52-3.68,9.02v19.68c0,3.56,1.46,6.79,3.8,9.14C8.46,109.4,10.33,110.54,12.42,111.17L12.42,111.17z M14.9,63.04c0.06-0.12,0.12-0.23,0.18-0.34c1.51-2.78,3.61-5.2,6.12-7.1c-1.03-1.5-1.93-3.09-2.69-4.73c-2.02-4.39-3.06-9.23-3.16-14.12c-0.04-1.92,0.07-3.84,0.32-5.75H11.1c-0.61,0-1.16,0.25-1.56,0.65c-0.4,0.4-0.65,0.96-0.65,1.56v31.5C10.72,63.78,12.75,63.2,14.9,63.04L14.9,63.04z M86.73,114.85c-0.17,0.01-0.35,0.01-0.52,0.01H16.1c-0.18,0-0.35,0-0.52-0.01v4.88h71.16V114.85L86.73,114.85z M15.57,111.69c0.17,0.01,0.35,0.01,0.52,0.01H86.2c0.18,0,0.35,0,0.52-0.01V74.8c0-3.41-0.84-6.62-2.31-9.44c-1.42-2.72-3.44-5.09-5.88-6.93c-0.74,0.87-1.53,1.69-2.38,2.47c-2.95,2.71-6.5,4.78-10.61,6.19c-4.09,1.4-8.73,2.16-13.89,2.28c-13.15,0.31-22.59-4.3-28.54-11.28c-2.16,1.63-3.97,3.72-5.27,6.11c-1.45,2.66-2.28,5.72-2.28,8.96V111.69L15.57,111.69z M82.88,37.47c0.19-8.46-2.59-17.1-7.91-23.26c-3.24-3.76-7.18-6.56-11.47-8.41c-4.49-1.93-9.35-2.81-14.18-2.63c-14.66,0.55-24.37,9.4-28.52,20.3c-1.61,4.23-2.39,8.75-2.3,13.23c0.09,4.45,1.03,8.86,2.88,12.85c4.49,9.75,14.39,17.05,30.23,16.68c4.8-0.11,9.13-0.82,12.93-2.12c3.7-1.27,6.89-3.11,9.51-5.52C79.87,53.21,82.7,45.43,82.88,37.47L82.88,37.47z';
-
 // Native viewBox 0 0 116.333 122.88. No pole-holding pose on the astronaut, so this is
 // composited beside it rather than "held" — proportions (position/scale below) tuned
-// by eye to read as planted next to the figure, moon-landing style.
+// by eye, re-checked against the new tumbling pose (was originally tuned for the old
+// standing UXWing astronaut).
 const FLAG_PATH =
   'M20.416,17.743c46.635-32.238,50.118,31.566,95.917-8.271v65.01c-43.681,39.279-53.104-24.185-95.917,8.068V17.743L20.416,17.743z M8.898,0c4.915,0,8.899,3.986,8.899,8.898c0,3.263-1.758,6.114-4.375,7.663h0.42v7.624v74.512v7.624h-0.42c2.617,1.549,4.375,3.574,4.375,7.662c0,4.087-3.984,8.896-8.899,8.896c-4.914,0-8.898-4.81-8.898-8.896c0-4.088,1.757-6.113,4.374-7.662H3.955v-7.624V24.185v-7.624h0.419C1.757,15.012,0,12.162,0,8.898C0,3.986,3.984,0,8.898,0L8.898,0z';
-const ASTRONAUT_VIEWBOX = '0 0 130 123';
-const FLAG_TRANSFORM = 'translate(86,14) scale(0.334)';
+const FLAG_VIEWBOX = '0 0 116.333 122.88';
 
 // Native viewBox 0 0 122.88 97.05.
 const SATURN_PATH =
@@ -88,8 +93,10 @@ const PLANE_CONFIGS = [
   return { ...p, pathD, endAngleDeg, endX: p.end[0], endY: p.end[1] };
 });
 
-// 3 astronauts (was 2), spread wider down the page — "random"/asymmetric, not aligned
-// with the plane rows.
+// 3 astronauts, spread wider down the page — "random"/asymmetric, not aligned with the
+// plane rows. Aspect ratio is now square (native PNG is 512x512) rather than the old
+// SVG's portrait 102.3x122.88 — width still drives the rendered size, height follows
+// via aspect-ratio in CSS.
 const ASTRONAUT_CONFIGS = [
   { side: 'left', top: '8%', width: 58, opacity: 0.32, flip: false },
   { side: 'right', top: '42%', width: 66, opacity: 0.3, flip: true },
@@ -132,16 +139,15 @@ const PLANET_CONFIGS = [
 
   {
     ASTRONAUT_CONFIGS.map((a) => (
-      <svg
+      <div
         class={`astronaut astronaut-${a.side}`}
         style={`top:${a.top}; ${a.side}:${Math.round(a.width * 0.1)}px; width:${a.width}px; opacity:${a.opacity}; ${a.flip ? 'transform:scaleX(-1);' : ''}`}
-        viewBox={ASTRONAUT_VIEWBOX}
       >
-        <path class="deco-icon" d={ASTRONAUT_PATH} />
-        <g transform={FLAG_TRANSFORM}>
+        <Image src={astronautFloating} alt="" width={200} height={200} class="astronaut-img" />
+        <svg class="astronaut-flag" viewBox={FLAG_VIEWBOX}>
           <path class="deco-icon" d={FLAG_PATH} />
-        </g>
-      </svg>
+        </svg>
+      </div>
     ))
   }
 
@@ -185,6 +191,24 @@ const PLANET_CONFIGS = [
 
   .deco-icon {
     fill: #ffffff;
+  }
+
+  .astronaut-img {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Source PNG is black-on-transparent (Noun Project's export) — forced white to
+       match the site's monochrome decorative treatment rather than tinting via
+       currentColor/fill, which doesn't apply to raster images. */
+    filter: brightness(0) invert(1);
+  }
+
+  .astronaut-flag {
+    position: absolute;
+    top: -6%;
+    right: -18%;
+    width: 34%;
+    height: auto;
   }
 
   @media (max-width: 720px) {
