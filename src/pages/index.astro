@@ -1,6 +1,7 @@
 ---
-// DD_v2.md §4 — hero + sparse project list. No filter bar anymore (v1 had one) — the
-// hero transitions straight into the projects.
+// DD_v2.1.md §4 — hero + sparse project list. No filter bar anymore (v1 had one) — the
+// hero transitions straight into the projects. §4.4 REVISED: 2-column grid at desktop
+// (was a single stacked column in v2), 1 column at mobile — see .project-list below.
 //
 // OPEN-ITEM DECISION (§2.1/§9, "not decided yet"): the Other section is built here as
 // a section at the bottom of the index page, not a dedicated `/other` page. Reasoning:
@@ -54,7 +55,18 @@ const otherBlocks = allBlocks
 
 <style>
   .project-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem 2rem;
+    max-width: 1100px;
+    margin: 0 auto;
     padding: 2rem 1.5rem 1rem;
+  }
+
+  @media (max-width: 720px) {
+    .project-list {
+      grid-template-columns: 1fr;
+    }
   }
 
   .other-divider {

@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="480" viewBox="0 0 480 480">
-  <rect width="480" height="480" fill="#44444e"/>
-  <circle cx="240" cy="190" r="90" fill="#5c5c68"/>
-  <path d="M80 460 C80 340 400 340 400 460 Z" fill="#5c5c68"/>
-  <text x="50%" y="94%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="20" fill="#c4c4cc">PLACEHOLDER PHOTO</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1250" viewBox="0 0 1000 1250">
+  <rect width="1000" height="1250" fill="#33414f"/>
+  <rect x="10" y="10" width="980" height="1230" fill="none" stroke="#7d8b99" stroke-width="2.5" stroke-dasharray="14 10"/>
+  <line x1="10" y1="10" x2="990" y2="1240" stroke="#7d8b99" stroke-width="1.5"/>
+  <line x1="990" y1="10" x2="10" y2="1240" stroke="#7d8b99" stroke-width="1.5"/>
+  <circle cx="500" cy="480" r="180" fill="#425263"/>
+  <path d="M180 1160 C180 850 820 850 820 1160 Z" fill="#425263"/>
+  <text x="50%" y="47%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="40" fill="#e8e8ee" font-weight="700">PLACEHOLDER</text>
+  <text x="50%" y="53%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="26" fill="#c4c4cc">PHOTO</text>
 </svg>

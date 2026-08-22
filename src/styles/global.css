@@ -1,33 +1,38 @@
 /*
- * DD_v2.md §5.3 — site-wide palette (open item, proposed here — NOT locked).
+ * DD_v2.1.md §5.1/§5.4 — site-wide palette (open item, proposed here — NOT locked).
  *
- * The doc explicitly asks for this to be proposed and reviewed rather than invented
- * silently, so treat every value below as a starting point, not a final answer:
+ * §5.1 specifies the halftone's own base tone ("dark navy... not blinding, not
+ * high-contrast") and its dot colors ("very slightly lighter than the navy
+ * background... low contrast by design"), but leaves the exact hex to be proposed. The
+ * rest of the palette (§5.4) was already open in v2 and stays open here — retuned
+ * below to sit cohesively against the new navy base rather than the old near-black one
+ * (--chip-bg in particular: it was a neutral grey against v2's near-black page, which
+ * read a little muddy once the page itself became navy-toned, so it's shifted into the
+ * same navy family as the halftone dots).
  *
- *   --accent / --accent-soft: a single soft violet/lavender accent (nebula-adjacent to
- *   the constellation motif rather than competing with it), used for links, the
- *   "Learn More" CTA, and hover/active states. Deliberately kept to ONE accent hue
- *   (the doc allows one or two) so it stays a quiet signature rather than v1's
- *   per-block color saturation. Chosen to sit clearly apart from the status-dot colors
- *   below so "accent" and "status" never get visually confused.
- *
- *   --page-bg / --page-text / --page-text-dim carried over unchanged from v1 — they
- *   already read as a night-sky-consistent dark base and weren't part of what v1's
- *   review flagged as needing to change.
+ * --page-bg IS the halftone's base tone — they're the same color by spec (§5.1: "the
+ * site's one signature background element"), not a page background with a separate
+ * effect layered on top. --halftone-dot / --halftone-dot-lit are read directly by
+ * ReactiveHalftoneBackground.svelte via getComputedStyle at runtime, so this file
+ * stays the single source of truth for those colors rather than duplicating hex
+ * strings into the component.
  *
  * Flag any of this for adjustment — it's all in one place specifically so it's cheap
  * to change.
  */
 :root {
-  --page-bg: #0b0b10;
+  --page-bg: #0d1b2e;
   --page-text: #e8e8ee;
   --page-text-dim: #9a9aa6;
+
+  --halftone-dot: #18293f;
+  --halftone-dot-lit: #27405e;
 
   --accent: #b79bd6;
   --accent-soft: #ded0f0;
 
-  --chip-bg: #1c1c24;
-  --chip-bg-hover: #2a2a34;
+  --chip-bg: #16233a;
+  --chip-bg-hover: #223349;
   --chip-text: #c8c8d4;
   --chip-text-hover: #ffffff;
 
@@ -35,6 +40,13 @@
   --status-completed: #4ad991;
   --status-paused: #e0b23c;
 
+  /*
+   * DD_v2.1.md §5.3 — display face is Arvo (loaded below via Google Fonts, weights
+   * 400/700), used with restraint on titles/headings/nav only — never dense body text.
+   * Body face is the existing plain sans-serif stack, kept deliberately un-fancy for
+   * readability at paragraph sizes (the doc's own framing: "explicitly not Arvo").
+   */
+  --font-display: 'Arvo', 'Roboto Slab', 'Zilla Slab', serif;
   --font-sans:
     -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
@@ -58,6 +70,14 @@ body {
   body {
     scroll-behavior: auto;
   }
+}
+
+h1,
+h2,
+h3,
+.nav-link,
+.wordmark {
+  font-family: var(--font-display);
 }
 
 img {

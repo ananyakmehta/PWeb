@@ -1,9 +1,13 @@
 ---
-// DD_v2.md §4.1 — casual tone, restrained decorative accents. The constellation
-// background (§5.1) is now the site's one signature visual element, so the hero stays
-// quiet rather than competing with it. Description text is filler; the human will
-// write real copy in a later pass. No filter bar below anymore (v1 had one) — the hero
-// transitions directly into the project list.
+// DD_v2.1.md §4.1 — REVISED from v2: full 50/50 split hero (not a compact header), the
+// photo large and dominant on the left rather than a small inset avatar. Sits on the
+// reactive halftone background (§5.1) via the shared Layout.
+//
+// RESPONSIVE CHOICE (flagged per the doc's explicit ask — "Claude Code's reasonable
+// call, flag which was chosen"): stacks at <=720px with the photo ON TOP and text
+// below. Reasoning: leading with the person's face reads better for a personal
+// portfolio than leading with a paragraph of filler text on a phone screen. Easy to
+// flip if the owner prefers text-first on mobile.
 import { Image } from 'astro:assets';
 import photo from '../assets/hero/photo.svg';
 
@@ -16,76 +20,88 @@ const links = [
 ---
 
 <header class="hero">
-  <span class="plane plane-a" aria-hidden="true">✈</span>
-  <span class="plane plane-b" aria-hidden="true">✈</span>
+  <div class="hero-photo-col">
+    <Image
+      src={photo}
+      alt="Placeholder profile photo"
+      width={1000}
+      height={1250}
+      class="hero-photo"
+    />
+  </div>
 
-  <div class="hero-inner">
-    <Image src={photo} alt="Placeholder profile photo" width={160} height={160} class="hero-photo" />
+  <div class="hero-text-col">
+    <span class="plane plane-a" aria-hidden="true">✈</span>
+    <span class="plane plane-b" aria-hidden="true">✈</span>
 
-    <div class="hero-copy">
-      <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
-      <p class="filler">
-        [Placeholder text] Line two of the filler bio goes here, casual in tone rather
-        than a LinkedIn headline.
-      </p>
-      <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
+    <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
+    <p class="filler">
+      [Placeholder text] Line two of the filler bio goes here, casual in tone rather
+      than a LinkedIn headline.
+    </p>
+    <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
 
-      <nav class="link-row" aria-label="Contact and profile links">
-        {
-          links.map((l) => (
-            <a href={l.href} class="link-pill">
-              {l.label}
-            </a>
-          ))
-        }
-      </nav>
-    </div>
+    <nav class="link-row" aria-label="Contact and profile links">
+      {
+        links.map((l) => (
+          <a href={l.href} class="link-pill">
+            {l.label}
+          </a>
+        ))
+      }
+    </nav>
   </div>
 </header>
 
 <style>
   .hero {
-    position: relative;
-    padding: 4rem 1.5rem 2rem;
-    max-width: 960px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: 3rem;
+    min-height: 82vh;
+    max-width: 1200px;
     margin: 0 auto;
-    overflow: hidden;
+    padding: 2rem 1.5rem;
   }
 
-  .hero-inner {
+  .hero-photo-col {
+    height: 100%;
     display: flex;
     align-items: center;
-    gap: 2rem;
-    flex-wrap: wrap;
   }
 
   .hero-photo {
-    border-radius: 50%;
-    flex-shrink: 0;
+    width: 100%;
+    height: auto;
+    max-height: 74vh;
+    object-fit: cover;
+    border-radius: 16px;
   }
 
-  .hero-copy {
-    flex: 1;
-    min-width: 260px;
+  .hero-text-col {
+    position: relative;
   }
 
   h1 {
-    margin: 0 0 0.6rem;
-    font-size: 1.9rem;
+    margin: 0 0 0.8rem;
+    font-size: 2.4rem;
     font-weight: 700;
+    line-height: 1.15;
   }
 
   .filler {
-    margin: 0 0 0.4rem;
+    margin: 0 0 0.5rem;
     color: var(--page-text-dim);
     max-width: 46ch;
+    font-size: 1.05rem;
   }
 
   .link-row {
     display: flex;
     flex-wrap: wrap;
     gap: 0.6rem;
-    margin-top: 1.2rem;
+    margin-top: 1.5rem;
   }
 
   .link-pill {
@@ -103,7 +119,7 @@ const links = [
     color: var(--chip-text-hover);
   }
 
-  /* Restrained decorative accents — small, not a focal element (§4). */
+  /* Restrained decorative accents — small, not a focal element. */
   .plane {
     position: absolute;
     font-size: 1.1rem;
@@ -113,15 +129,40 @@ const links = [
   }
 
   .plane-a {
-    top: 1.2rem;
+    top: -1.5rem;
     right: 8%;
     transform: rotate(20deg);
   }
 
   .plane-b {
-    top: 5.5rem;
+    top: 3rem;
     right: 18%;
     transform: rotate(35deg) scale(0.7);
     opacity: 0.2;
+  }
+
+  @media (max-width: 720px) {
+    .hero {
+      grid-template-columns: 1fr;
+      min-height: auto;
+      gap: 1.75rem;
+      padding: 1.5rem 1.5rem 2.5rem;
+    }
+
+    .hero-photo-col {
+      order: 1;
+    }
+
+    .hero-photo {
+      max-height: 50vh;
+    }
+
+    .hero-text-col {
+      order: 2;
+    }
+
+    h1 {
+      font-size: 1.9rem;
+    }
   }
 </style>

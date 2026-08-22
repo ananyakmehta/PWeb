@@ -43,8 +43,9 @@ const href = withBase(`projects/${block.slug}/`);
 
 <style>
   .project-card {
-    max-width: 900px;
-    margin: 0 auto 4.5rem;
+    /* DD_v2.1.md §4.4 — sizing now comes from the parent grid's column track (see
+       index.astro's .project-list), not from the card centering itself as a single
+       stacked column (that was v2's layout). */
     opacity: 1;
     transform: none;
   }
