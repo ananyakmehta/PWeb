@@ -6,10 +6,14 @@ priority: 1
 dateStart: "2023-08"
 typeTags: ["project"]
 topicTags: ["mechanical-design", "fluids-aero"]
-primaryDescription: "[Placeholder copy] Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, standing in for the real project summary."
+cardSummary: "[Placeholder] A student-built formula car, redesigned every season."
+primaryDescription: "[Placeholder copy] Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua, standing in for the real project summary. This is the full detail-page description, noticeably longer than the one-line card summary above."
 links:
   - label: "CAD"
     url: "#"
+heroImage:
+  src: "../../assets/blocks/cad-car/hero.svg"
+  alt: "Placeholder hero image for CAD Car"
 images:
   - src: "../../assets/blocks/cad-car/1.svg"
     alt: "Placeholder render 1 of the CAD car"
@@ -35,7 +39,6 @@ versions:
     specs: "[Placeholder] Wheelbase 2420mm · Weight 241kg (filler spec)"
     cadUrl: "#"
 isOther: false
-theme: "cad-car"
 ---
-Body is intentionally unused — see src/content/config.ts for why primaryDescription
+Body is intentionally unused — see src/content.config.ts for why primaryDescription
 lives in frontmatter instead of here.

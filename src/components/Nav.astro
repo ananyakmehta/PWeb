@@ -1,0 +1,97 @@
+---
+// DD_v2.md §2.2 — "Simple top nav: Home, Projects (if useful as an anchor/index),
+// Résumé, contact links — mirrors the reference site's minimal nav." Checked the
+// reference (davisryan.tech): its nav is Home / Resume / Projects text links plus a
+// small row of social links. Mirrored that shape here — Projects points at the index
+// page's project-list anchor so it's useful to click even from a detail page.
+import { withBase } from '../lib/url';
+
+const links = [
+  { label: 'GitHub', href: '#' },
+  { label: 'LinkedIn', href: '#' },
+  { label: 'Email', href: '#' },
+];
+---
+
+<nav class="site-nav" aria-label="Primary">
+  <a class="wordmark" href={withBase('')}>Home</a>
+  <div class="nav-links">
+    <a class="nav-link" href={withBase('#projects')}>Projects</a>
+    <a class="nav-link" href="#">Résumé</a>
+    <span class="nav-sep" aria-hidden="true"></span>
+    {
+      links.map((l) => (
+        <a class="nav-link nav-link-social" href={l.href}>
+          {l.label}
+        </a>
+      ))
+    }
+  </div>
+</nav>
+
+<style>
+  .site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    row-gap: 0.6rem;
+    padding: 1rem 1.5rem;
+    max-width: 960px;
+    margin: 0 auto;
+    background: rgba(11, 11, 16, 0.82);
+    backdrop-filter: blur(6px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Below this width nav-links wraps internally (see .nav-links) — letting site-nav's
+     own two children share a row via align-items:center then centers the short
+     wordmark against nav-links' full multi-line height, so "Home" visually drifts into
+     the middle of the wrapped links instead of staying pinned to its own line. Stack
+     them instead. */
+  @media (max-width: 520px) {
+    .site-nav {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  .wordmark {
+    text-decoration: none;
+    color: var(--page-text);
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-links {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .nav-link {
+    text-decoration: none;
+    color: var(--page-text-dim);
+    font-size: 0.85rem;
+    transition: color 150ms ease;
+  }
+
+  .nav-link:hover {
+    color: var(--accent);
+  }
+
+  .nav-sep {
+    width: 1px;
+    height: 14px;
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .nav-link-social {
+    font-size: 0.8rem;
+  }
+</style>

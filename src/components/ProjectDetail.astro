@@ -1,0 +1,302 @@
+---
+// DD_v2.md §6 — full detail-page content, in the specified order. One shared template
+// for every project (§6's own framing: "one shared detail-page template, renders
+// sections based on which optional fields are present") — same
+// field-presence-drives-content approach v1 used for its inline blocks, just as a
+// plain Astro component now that there's no per-block theming or interactivity left
+// that would require Svelte.
+import { Image } from 'astro:assets';
+import StatusDot from './StatusDot.svelte';
+import { getBlockAsset } from '../lib/blockAssets';
+import { withBase } from '../lib/url';
+
+interface Props {
+  block: any;
+}
+
+const { block } = Astro.props;
+
+const heroAsset = getBlockAsset(block.slug, block.heroImage.src);
+const supplementaryImages = (block.images ?? []).map((img: any) => ({
+  ...img,
+  asset: getBlockAsset(block.slug, img.src),
+}));
+
+const dateRange = `${block.dateStart} – ${block.dateEnd ?? 'Ongoing'}`;
+const allTags = [...block.typeTags, ...block.topicTags];
+---
+
+<article class="project-detail">
+  <Image
+    src={heroAsset}
+    alt={block.heroImage.alt}
+    width={1400}
+    height={820}
+    class="hero-image"
+  />
+
+  <div class="detail-body">
+    <h1>{block.title}</h1>
+    <p class="date-range">{dateRange}</p>
+    <StatusDot status={block.status} />
+
+    {
+      allTags.length > 0 && (
+        <div class="tags">
+          {allTags.map((t: string) => (
+            <span class="tag">{t}</span>
+          ))}
+        </div>
+      )
+    }
+
+    <p class="description">{block.primaryDescription}</p>
+
+    {
+      supplementaryImages.length > 0 && (
+        <div class={`image-grid count-${supplementaryImages.length}`}>
+          {supplementaryImages.map((img: any) => (
+            <figure>
+              <Image src={img.asset} alt={img.alt} width={800} height={500} />
+              {img.caption && <figcaption>{img.caption}</figcaption>}
+            </figure>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      block.versions?.length ? (
+        <div class="versions-block">
+          <p class="current-version">
+            <strong>{block.versions[0].label}</strong>
+            {block.versions[0].specs && <span> — {block.versions[0].specs}</span>}
+            {(block.links?.length ?? 0) > 0 && (
+              <a class="inline-link" href={block.links[0].url}>
+                {block.links[0].label}
+              </a>
+            )}
+          </p>
+          {block.versions.length > 1 && (
+            <div class="previous-versions">
+              <p class="previous-versions-label">Previous versions</p>
+              <ul>
+                {block.versions.slice(1).map((v: any) => (
+                  <li>
+                    <strong>{v.label}</strong>
+                    {v.specs && <span> — {v.specs}</span>}
+                    {v.cadUrl && (
+                      <a class="inline-link" href={v.cadUrl}>
+                        CAD
+                      </a>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      ) : block.currentWork ? (
+        <p class="current-work">{block.currentWork}</p>
+      ) : block.impact ? (
+        <>
+          <p class="impact">{block.impact}</p>
+          {(block.links?.length ?? 0) > 0 && (
+            <div class="links-row">
+              {block.links.map((l: any) => (
+                <a class="inline-link" href={l.url}>
+                  {l.label}
+                </a>
+              ))}
+            </div>
+          )}
+        </>
+      ) : block.links?.length ? (
+        <div class="links-row">
+          {block.links.map((l: any) => (
+            <a class="inline-link" href={l.url}>
+              {l.label}
+            </a>
+          ))}
+        </div>
+      ) : null
+    }
+
+    {
+      (block.tools?.length ?? 0) > 0 && (
+        <p class="tools-row">
+          <span class="tools-label">Tools:</span> {block.tools.join(' · ')}
+        </p>
+      )
+    }
+
+    <a class="back-link" href={withBase('#projects')}>
+      ← Back to projects
+    </a>
+  </div>
+</article>
+
+<style>
+  .project-detail {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 1.5rem 1.5rem 4rem;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: auto;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+
+  h1 {
+    margin: 0 0 0.3rem;
+    font-size: 2rem;
+  }
+
+  .date-range {
+    margin: 0 0 0.5rem;
+    color: var(--page-text-dim);
+    font-size: 0.9rem;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin: 0.9rem 0;
+  }
+
+  .tag {
+    font-size: 0.72rem;
+    padding: 0.22rem 0.6rem;
+    border-radius: 999px;
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    text-transform: capitalize;
+  }
+
+  .description {
+    color: var(--page-text);
+    line-height: 1.6;
+    max-width: 65ch;
+    margin: 1rem 0;
+  }
+
+  .image-grid {
+    display: grid;
+    gap: 0.75rem;
+    margin: 1.5rem 0;
+  }
+
+  .image-grid.count-1 {
+    grid-template-columns: minmax(0, 480px);
+  }
+
+  .image-grid.count-2 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .image-grid.count-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  @media (max-width: 640px) {
+    .image-grid.count-2,
+    .image-grid.count-3 {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .image-grid figure {
+    margin: 0;
+  }
+
+  .image-grid img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+
+  .image-grid figcaption {
+    margin-top: 0.3rem;
+    font-size: 0.72rem;
+    color: var(--page-text-dim);
+  }
+
+  .current-work,
+  .impact {
+    color: var(--page-text);
+    line-height: 1.6;
+    max-width: 65ch;
+    margin: 1.5rem 0;
+  }
+
+  .current-version {
+    color: var(--page-text);
+    margin: 1.5rem 0 0.5rem;
+  }
+
+  .previous-versions {
+    color: var(--page-text-dim);
+    font-size: 0.9rem;
+  }
+
+  .previous-versions-label {
+    margin: 0 0 0.3rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .previous-versions ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .links-row {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .inline-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    font-size: 0.9rem;
+    margin-left: 0.5rem;
+  }
+
+  .links-row .inline-link {
+    margin-left: 0;
+  }
+
+  .tools-row {
+    margin-top: 1.5rem;
+    font-size: 0.78rem;
+    color: var(--page-text-dim);
+  }
+
+  .tools-label {
+    font-weight: 600;
+    margin-right: 0.3rem;
+  }
+
+  .back-link {
+    display: inline-block;
+    margin-top: 2.5rem;
+    color: var(--page-text-dim);
+    text-decoration: none;
+    font-size: 0.88rem;
+  }
+
+  .back-link:hover {
+    color: var(--accent);
+  }
+</style>

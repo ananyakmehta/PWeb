@@ -7,9 +7,12 @@ dateStart: "2021-01"
 dateEnd: "2021-06"
 typeTags: []
 topicTags: []
-primaryDescription: "[Placeholder copy] This block exists only to QA the 'Other' divider and section spacing (§7, optional per the design doc) — it is not one of the 4 pilot blocks and should be deleted or replaced once real taekwondo/tutoring content is written in a future pass."
+cardSummary: "[Placeholder] QA-only card for the Other section."
+primaryDescription: "[Placeholder copy] This block exists only to QA the Other section's placement at the bottom of the index (DD_v2 §2.1/§9) — it is not one of the 4 pilot projects and should be deleted or replaced once real taekwondo/tutoring content is written in a future pass."
+heroImage:
+  src: "../../assets/blocks/other-placeholder-qa/hero.svg"
+  alt: "Placeholder hero image for the Other QA block"
 tools: ["N/A"]
 isOther: true
-theme: "other"
 ---
-QA-only filler block for the Other section — see §7 of DD_initial_build.md. Safe to delete.
+QA-only filler block for the Other section — see DD_v2.md §2.1/§9. Safe to delete.

@@ -1,0 +1,119 @@
+---
+// DD_v2.md §4.2 — sparse index card. Explicitly NOT shown here: full description,
+// tags, tools, links, versions, sub-items, the supplementary images array — all of
+// that lives on the detail page only (§6). The card's job is to make someone want to
+// click, not tell the whole story.
+import { Image } from 'astro:assets';
+import StatusDot from './StatusDot.svelte';
+import { getBlockAsset } from '../lib/blockAssets';
+import { withBase } from '../lib/url';
+
+interface Props {
+  block: {
+    slug: string;
+    title: string;
+    cardSummary: string;
+    status: 'ongoing' | 'paused' | 'completed';
+    heroImage: { src: string; alt: string };
+  };
+}
+
+const { block } = Astro.props;
+const heroAsset = getBlockAsset(block.slug, block.heroImage.src);
+const href = withBase(`projects/${block.slug}/`);
+---
+
+<article class="project-card" data-reveal>
+  <a class="card-image-link" href={href} tabindex="-1" aria-hidden="true">
+    <Image
+      src={heroAsset}
+      alt={block.heroImage.alt}
+      width={1400}
+      height={820}
+      class="card-image"
+    />
+  </a>
+  <div class="card-body">
+    <StatusDot status={block.status} />
+    <h3 class="card-title"><a href={href}>{block.title}</a></h3>
+    <p class="card-summary">{block.cardSummary}</p>
+    <a class="learn-more" href={href}>Learn More →</a>
+  </div>
+</article>
+
+<style>
+  .project-card {
+    max-width: 900px;
+    margin: 0 auto 4.5rem;
+    opacity: 1;
+    transform: none;
+  }
+
+  .project-card[data-reveal] {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 600ms ease, transform 600ms ease;
+  }
+
+  .project-card.is-visible {
+    opacity: 1;
+    transform: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .project-card[data-reveal] {
+      transition: none;
+    }
+  }
+
+  .card-image-link {
+    display: block;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .card-image {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1400 / 820;
+    object-fit: cover;
+  }
+
+  .card-body {
+    padding: 1.25rem 0.25rem 0;
+  }
+
+  .card-title {
+    margin: 0.6rem 0 0.4rem;
+    font-size: 1.4rem;
+  }
+
+  .card-title a {
+    text-decoration: none;
+    color: var(--page-text);
+  }
+
+  .card-title a:hover {
+    color: var(--accent);
+  }
+
+  .card-summary {
+    margin: 0 0 0.9rem;
+    color: var(--page-text-dim);
+    max-width: 60ch;
+  }
+
+  .learn-more {
+    display: inline-block;
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.9rem;
+    border-bottom: 1px solid transparent;
+    transition: border-color 150ms ease, color 150ms ease;
+  }
+
+  .learn-more:hover {
+    color: var(--accent-soft);
+    border-color: currentColor;
+  }
+</style>

@@ -1,16 +1,15 @@
 import { defineCollection, z } from 'astro:content';
 import { glob } from 'astro/loaders';
 
-// NOTE ON DEVIATION FROM DD_initial_build.md §3.1: the doc specifies this file as
-// `src/content/config.ts` using `defineCollection({ type: 'content', schema })` (the
-// legacy content-collections API). The Astro version actually installed here (7.2.4)
-// has fully removed that legacy path/format in favor of the Content Layer API —
-// building against the doc's exact snippet fails with a hard
-// [LegacyContentConfigError], not a lint warning. This is a toolchain-version
-// incompatibility, not a style choice: the file has been moved to the new required
-// location (`src/content.config.ts`) and given an explicit `glob()` loader pointing at
-// the same `src/content/blocks/` directory. The Zod schema itself — the actual design
-// decision in §3.1 — is unchanged field-for-field from the doc.
+// NOTE ON DEVIATION FROM DD_v2.md §3.1 (carried over from v1): the doc's snippet uses
+// `src/content/config.ts` + `defineCollection({ type: 'content', schema })`, the legacy
+// content-collections API. The installed Astro version (7.2.4) has fully removed that
+// legacy path/format in favor of the Content Layer API — building against the doc's
+// exact snippet fails with a hard [LegacyContentConfigError]. This is a
+// toolchain-version incompatibility, not a style choice: the file lives at the new
+// required location (`src/content.config.ts`) with an explicit `glob()` loader
+// pointing at the same `src/content/blocks/` directory. The Zod schema itself is
+// otherwise unchanged from what the doc specifies.
 
 const typeTagEnum = z.enum([
   'research',
@@ -56,29 +55,33 @@ const subItemSchema = z.object({
 
 const blockSchema = z.object({
   title: z.string(),
-  slug: z.string(),
+  slug: z.string(), // becomes the /projects/<slug> URL
   status: z.enum(['ongoing', 'paused', 'completed']),
-  priority: z.number(), // manual sort order for the unfiltered default view
+  priority: z.number(), // manual sort order for the index view
   dateStart: z.string(),
   dateEnd: z.string().optional(), // absent = ongoing
   typeTags: z.array(typeTagEnum),
   topicTags: z.array(topicTagEnum),
-  // DD_initial_build.md §3.2: primaryDescription lives in frontmatter (not the markdown
-  // body). Chosen over using the body-as-description because it keeps the block object
-  // fully described by validated frontmatter alone — rendering never needs to call
-  // entry.render()/<Content /> just to get the primary text, which simplifies passing
-  // block data as plain serializable props into the Svelte feed island (§5/§6).
-  primaryDescription: z.string(), // markdown-capable body content
+  // Inert metadata in v2 — no filtering UI consumes these anymore (DD_v2 §2.3), but
+  // they still render as small non-interactive labels on the detail page (§6.3).
+  cardSummary: z.string(), // one short line for the sparse index card (DD_v2 §3.1, §4.2)
+  // DD_initial_build.md §3.2 (unchanged reasoning in v2): lives in frontmatter, not the
+  // markdown body, so the block object is fully described by validated frontmatter
+  // alone. Full detail-page description only — never shown on the index card.
+  primaryDescription: z.string(),
   award: z.string().optional(),
   links: z.array(linkSchema).optional(),
   subItems: z.array(subItemSchema).optional(),
-  images: z.array(imageSchema).max(3).optional(), // up to 3; component must gracefully handle 1, 2, or 3
+  images: z.array(imageSchema).max(3).optional(), // supplementary, detail page only; up to 3, must gracefully handle 1, 2, or 3
+  heroImage: imageSchema, // required — dominant visual on the index card and top of the detail page (DD_v2 §3.1)
   tools: z.array(z.string()).optional(), // flat list, e.g. ["OnShape", "SolidWorks", "Python"]
   versions: z.array(versionSchema).optional(), // CAD-car-style version history
   currentWork: z.string().optional(), // GT-style "what I'm doing now" blurb
   impact: z.string().optional(), // torque-ML-style "impact" blurb
-  isOther: z.boolean().default(false), // true = renders in "Other" section, not main feed, and is excluded from tag filtering
-  theme: z.string(), // key into the per-block theme config, see src/config/blockThemes.ts
+  isOther: z.boolean().default(false), // true = renders in the "Other" section instead of the main index grid
+  // NOTE: v1's `theme` field (per-block color theme key) is removed — DD_v2 §5.3
+  // replaces per-block theming with one site-wide palette, so there's no longer a
+  // per-block theme to key into.
 });
 
 const blocks = defineCollection({

@@ -1,7 +1,9 @@
 ---
-// DD_initial_build.md §4 — casual tone, restrained decorative accents (the site's real
-// signature moments are the per-block easter eggs, not the hero). Description text is
-// filler; the human will write real copy in a later pass.
+// DD_v2.md §4.1 — casual tone, restrained decorative accents. The constellation
+// background (§5.1) is now the site's one signature visual element, so the hero stays
+// quiet rather than competing with it. Description text is filler; the human will
+// write real copy in a later pass. No filter bar below anymore (v1 had one) — the hero
+// transitions directly into the project list.
 import { Image } from 'astro:assets';
 import photo from '../assets/hero/photo.svg';
 
@@ -91,14 +93,14 @@ const links = [
     font-size: 0.85rem;
     padding: 0.4rem 0.9rem;
     border-radius: 999px;
-    background: var(--pill-bg);
-    color: var(--pill-text);
-    transition: background 150ms ease;
+    background: var(--chip-bg);
+    color: var(--chip-text);
+    transition: background 150ms ease, color 150ms ease;
   }
 
   .link-pill:hover {
-    background: var(--pill-bg-active);
-    color: var(--pill-text-active);
+    background: var(--chip-bg-hover);
+    color: var(--chip-text-hover);
   }
 
   /* Restrained decorative accents — small, not a focal element (§4). */

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="820" viewBox="0 0 1400 820">
+  <rect width="1400" height="820" fill="#2c2c34"/>
+  <rect x="10" y="10" width="1380" height="800" fill="none" stroke="#8a8a96" stroke-width="2.5" stroke-dasharray="14 10"/>
+  <line x1="10" y1="10" x2="1390" y2="810" stroke="#8a8a96" stroke-width="1.5"/>
+  <line x1="1390" y1="10" x2="10" y2="810" stroke="#8a8a96" stroke-width="1.5"/>
+  <text x="50%" y="47%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="46" fill="#e8e8ee" font-weight="700">HERO PLACEHOLDER</text>
+  <text x="50%" y="55%" text-anchor="middle" font-family="system-ui, sans-serif" font-size="26" fill="#c4c4cc">Other (QA placeholder)</text>
+</svg>

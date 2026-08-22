@@ -1,0 +1,23 @@
+---
+// DD_v2.md §3.4 — one static page per collection entry via getStaticPaths, standard
+// Astro content-collection pattern. Generated for every entry, including isOther
+// blocks — the doc doesn't say to exclude them, and doing so would be exactly the kind
+// of "custom routing logic" §3.4 says isn't needed.
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import ProjectDetail from '../../components/ProjectDetail.astro';
+
+export async function getStaticPaths() {
+  const blocks = await getCollection('blocks');
+  return blocks.map((entry) => ({
+    params: { slug: entry.data.slug },
+    props: { block: entry.data },
+  }));
+}
+
+const { block } = Astro.props;
+---
+
+<Layout title={`${block.title} — PWeb`}>
+  <ProjectDetail block={block} />
+</Layout>

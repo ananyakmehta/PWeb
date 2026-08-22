@@ -1,7 +1,11 @@
 ---
+// DD_v2.md §2.2 — single shared layout wrapping every page (index + all detail pages),
+// so the constellation background, nav, and cursor persist across navigation instead
+// of being rebuilt per page.
 import '../styles/global.css';
 import ConstellationBackground from '../components/ConstellationBackground.astro';
 import CursorSystem from '../components/CursorSystem.svelte';
+import Nav from '../components/Nav.astro';
 
 interface Props {
   title: string;
@@ -20,6 +24,7 @@ const { title } = Astro.props;
     <ConstellationBackground />
     <CursorSystem client:load />
     <div class="page-content">
+      <Nav />
       <slot />
     </div>
   </body>

@@ -6,7 +6,11 @@ priority: 2
 dateStart: "2024-01"
 typeTags: ["research", "experience"]
 topicTags: ["fluids-aero", "mechanical-design"]
-primaryDescription: "[Placeholder copy] Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat — standing in for the real lab summary."
+cardSummary: "[Placeholder] Ongoing aero/fluids research at Georgia Tech."
+primaryDescription: "[Placeholder copy] Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat — standing in for the real lab summary. This is the full detail-page description, noticeably longer than the one-line card summary above."
+heroImage:
+  src: "../../assets/blocks/gt-research/hero.svg"
+  alt: "Placeholder hero image for GT Research"
 images:
   - src: "../../assets/blocks/gt-research/1.svg"
     alt: "Placeholder image 1 for GT Research"
@@ -17,7 +21,6 @@ images:
 tools: ["MATLAB", "SolidWorks", "LabVIEW"]
 currentWork: "[Placeholder] Currently iterating on filler-stage-two of the rig, chasing down a measurement inconsistency that is itself entirely fictional for this pass."
 isOther: false
-theme: "gt-research"
 ---
-Body is intentionally unused — see src/content/config.ts for why primaryDescription
+Body is intentionally unused — see src/content.config.ts for why primaryDescription
 lives in frontmatter instead of here.
