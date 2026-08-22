@@ -1,43 +1,59 @@
 ---
-// Page-length decorative overlay: paper planes (dotted loop-de-loop trails, "flying
-// in" from off the left/right screen edges), a few little astronauts tumbling through
-// space with flags, and several sparse, colored planets. Low-opacity, restrained.
+// Decorative overlay: paper planes (dotted loop-de-loop trails, "flying in" from off
+// the left/right screen edges), astronauts tumbling through space with flags, sparse
+// colored planets, and small constellation/star clusters. Low-opacity, restrained.
 //
 // Icons are real marks, not hand-drawn — verified visually (rendered + screenshotted)
 // before integrating in every case, since a wrong path/asset renders as a garbled
 // shape, not something to trust from memory.
-//   - Plane:     https://uxwing.com/paper-plane-icon/ (UXWing — no attribution needed)
-//   - Astronaut: https://thenounproject.com/icon/floating-astronaut-7644785/ by Andy
-//                Horvath, CC BY 3.0 — the one asset on this site that requires
-//                attribution (credited in Footer.astro). Searched UXWing/Flaticon/SVG
-//                Repo/Reshot/Tabler/unDraw/freesvg.org first for a no-attribution
-//                non-standing pose; none existed in a style that fit (either only a
-//                standing pose, attribution-required, or colorful clipart/illustration
-//                style that clashes with everything else here) — this was the only
-//                actual match for "not standing" in a compatible monochrome style, and
-//                it's PNG raster (Noun Project gates SVG behind a paid API), not SVG
-//                like everything else in this file — tinted white via CSS filter
-//                (brightness(0) invert(1)) rather than currentColor/fill.
-//   - Flag:      https://uxwing.com/flag-icon/  (astronaut has no flag built in;
-//                composited alongside it below, proportions tuned by eye)
-//   - Planet:    https://uxwing.com/planet-saturn-space-icon/ — reused for all 6
-//                planet placements (varied size/opacity/color) rather than sourcing 6
-//                different designs; same reuse-with-variation approach as the planes.
+//   - Plane:         https://uxwing.com/paper-plane-icon/ (UXWing — no attribution needed)
+//   - Astronaut:     https://thenounproject.com/icon/floating-astronaut-7644785/ by
+//                    Andy Horvath, CC BY 3.0 — the one asset on this site that requires
+//                    attribution (credited in Footer.astro). Searched UXWing/Flaticon/
+//                    SVG Repo/Reshot/Tabler/unDraw/freesvg.org first for a
+//                    no-attribution non-standing pose; none existed in a style that fit
+//                    — this was the only actual match for "not standing" in a
+//                    compatible monochrome style, and it's PNG raster (Noun Project
+//                    gates SVG behind a paid API), not SVG like everything else here —
+//                    tinted white via CSS filter (brightness(0) invert(1)) rather than
+//                    currentColor/fill.
+//   - Flag:          https://uxwing.com/flag-icon/  (astronaut has no flag built in;
+//                    composited alongside it below, proportions tuned by eye)
+//   - Planet:        https://uxwing.com/planet-saturn-space-icon/ — reused for all
+//                    planet placements (varied size/opacity/color) rather than sourcing
+//                    several different designs; same reuse-with-variation approach as
+//                    the planes.
+//   - Constellation: https://uxwing.com/stars-icon/ (UXWing, no attribution needed) — a
+//                    small 3-star cluster. UXWing has no literal connect-the-dots
+//                    constellation icon; this cluster is the closest real match in the
+//                    same monochrome line-art style, used as the "constellation" motif.
+//   - Star:          https://uxwing.com/star-line-white-icon/ (UXWing, no attribution
+//                    needed) — single 5-point outline star, used small/numerous.
 //
-// Not hero-scoped: placed as an absolutely-positioned (inset:0) child of a
-// position:relative wrapper around the WHOLE page's content (hero + project grid +
-// Other section). Percentage-based `top` values are relative to that wrapper's actual
-// rendered height, so everything disperses across however long the page ends up being
-// — no hardcoded page-height assumption.
+// Hero-scoped exclusion: this component is placed inside `.decorated-content` in
+// index.astro, a position:relative wrapper that starts AFTER the hero (Hero is a
+// sibling outside it) rather than around the whole page. That's a structural
+// guarantee, not a tuned coordinate — none of these graphics can land over the hero
+// banner because the box they're positioned relative to doesn't include it.
 //
-// That wrapper needs a max-width with auto margins (not true edge-to-edge full
-// viewport width) — the same trick the hero uses. Planes poke slightly outside the
-// wrapper's own box via negative left/right offsets; as long as the wrapper is
-// narrower than the viewport, that negative space lands in the real margin gutter
-// (reading convincingly as "off-screen"), rather than pushing actual page content past
-// x=0 and risking a horizontal scrollbar. Astronauts/planets don't need that trick —
-// they're static, not "entering" from anywhere — so they're positioned with small
-// (non-negative-heavy) offsets instead.
+// Layout: every item below is placed by `layoutTrack()`, not hand-picked percentages.
+// It knows each item's real height (from its width and its icon's own aspect ratio),
+// stacks the track's items top-to-bottom with a guaranteed minimum gap, and — since
+// there's usually slack left over — spreads that slack evenly into every gap rather
+// than leaving it bunched at the bottom. That's what "no overlap, okay spacing between
+// each" is actually built from here, not eyeballed. REFERENCE_HEIGHT is the measured
+// rendered height of `.decorated-content` (~1436-1485px across the 1024-1440px desktop
+// range this component is shown at); using a mid-range figure keeps the percentage
+// math safe in both directions — a shorter real render compresses gaps slightly, a
+// taller one loosens them, neither one overlaps.
+//
+// The wrapper needs a max-width with auto margins (not true edge-to-edge full viewport
+// width) — the same trick the hero uses. Planes poke slightly outside the wrapper's
+// own box via negative left/right offsets; as long as the wrapper is narrower than the
+// viewport, that negative space lands in the real margin gutter (reading convincingly
+// as "off-screen"), rather than pushing actual page content past x=0 and risking a
+// horizontal scrollbar. Everything else is static, not "entering" from anywhere — so
+// it's positioned with small (non-negative-heavy) offsets instead.
 //
 // Desktop-only: hidden below 720px, the same breakpoint where the hero collapses to a
 // stacked mobile layout — these coordinates are authored against the wide desktop
@@ -69,54 +85,125 @@ const SATURN_PATH =
   'M37.11,6.51A48.54,48.54,0,0,1,93,11.68l.27-.08c7-1.78,13.15-2.53,17.89-2.16,5.17.4,8.9,2.15,10.7,5.37,3.25,5.79-1.07,14.76-10.66,24.58-.58.59-1.19,1.19-1.81,1.8A48.53,48.53,0,0,1,30.12,85.64c-.85.22-1.69.42-2.51.61-13.36,3.07-23.25,2.07-26.5-3.72l0,0c-1.81-3.25-1.32-7.39,1.1-12.07,2.17-4.2,6-9,11.07-14l.21-.2A48.56,48.56,0,0,1,37.11,6.51Zm67.72,38.83A195.18,195.18,0,0,1,72.24,67.91l-.06,0A195.65,195.65,0,0,1,36,84a43.59,43.59,0,0,0,68.82-38.62Zm-80.59,26c3.39-.43,11.31-3.54,20.77-7.86,6.22-2.83,13-6.28,19.61-10s13-7.61,18.67-11.44c8.34-5.69,14.77-10.83,16.59-13.9q-.37-.7-.78-1.41A43.57,43.57,0,0,0,23.64,70.31l.6,1Z';
 const SATURN_VIEWBOX = '0 0 122.88 97.05';
 
-const PLANE_CONFIGS = [
-  // left side — flying in from the left edge, heading right/inward
-  { side: 'left', top: '3%', width: 124, opacity: 0.4, start: [-6, 30], end: [60, 13], loopRadius: 9, loopTurns: 1.2, loopDir: 1 },
-  { side: 'left', top: '24%', width: 100, opacity: 0.28, start: [-6, 8], end: [66, 40], loopRadius: 7, loopTurns: 1.05, loopDir: -1 },
-  { side: 'left', top: '51%', width: 140, opacity: 0.34, start: [-6, 48], end: [58, 18], loopRadius: 10, loopTurns: 1.3, loopDir: 1 },
-  { side: 'left', top: '79%', width: 92, opacity: 0.24, start: [-6, 20], end: [70, 50], loopRadius: 6, loopTurns: 1.0, loopDir: -1 },
-  // right side — flying in from the right edge, heading left/inward
-  { side: 'right', top: '12%', width: 128, opacity: 0.4, start: [96, 26], end: [28, 9], loopRadius: 9, loopTurns: 1.15, loopDir: -1 },
-  { side: 'right', top: '38%', width: 96, opacity: 0.28, start: [96, 6], end: [22, 38], loopRadius: 7, loopTurns: 1.1, loopDir: 1 },
-  { side: 'right', top: '64%', width: 148, opacity: 0.36, start: [96, 46], end: [34, 16], loopRadius: 10.5, loopTurns: 1.25, loopDir: -1 },
-  { side: 'right', top: '92%', width: 88, opacity: 0.22, start: [96, 20], end: [20, 48], loopRadius: 6.5, loopTurns: 1.0, loopDir: 1 },
-].map((p) => {
-  const { pathD, endAngleDeg } = buildLoopTrail({
-    startX: p.start[0],
-    startY: p.start[1],
-    endX: p.end[0],
-    endY: p.end[1],
-    loopRadius: p.loopRadius,
-    loopTurns: p.loopTurns,
-    loopDirection: p.loopDir as 1 | -1,
+// Native viewBox 0 0 512 273.23. A cluster of 3 stars (one solid, two hollow via the
+// path's own nonzero fill rule) — see the licensing comment above for why this stands
+// in for "constellation".
+const CONSTELLATION_PATH =
+  'm404.63 17.77 26.89 62.95 68.58 6.13c3.52.42 6.6 2.19 8.74 4.73 2.15 2.56 3.35 5.9 3.13 9.44l-.07.85c-.2 1.6-.67 3.11-1.36 4.48l-.32.57c-.59 1.03-1.32 1.98-2.15 2.81l-52.28 45.69 15.26 66.77c.84 3.62.11 7.27-1.73 10.19-1.83 2.9-4.8 5.14-8.43 5.96-1.79.4-3.62.43-5.36.12-1.69-.3-3.3-.93-4.74-1.83l-58.58-35.01-27.34 16.34-3.63-15.61 27.01-16.15a7.633 7.633 0 0 1 7.88-.03l59.09 35.32-15.34-67.1c-.59-2.66.23-5.54 2.42-7.46l51.85-45.27-68.1-6.12a7.621 7.621 0 0 1-6.8-4.64l-27.04-63.3-17.94 42.02-16.02-1.44 21.55-50.45c1.45-3.42 4.16-5.93 7.36-7.22 3.21-1.3 6.91-1.36 10.34.1l.59.28c1.4.67 2.64 1.57 3.66 2.6 1.23 1.19 2.19 2.67 2.88 4.28zM262.89 4.59l36.63 85.78 92.92 8.34c4.1.35 7.14 3.96 6.78 8.06-.17 2-1.12 3.74-2.52 4.96l-70.29 61.38 20.79 90.99c.93 4.01-1.59 8.02-5.61 8.94-2.05.47-4.11.04-5.75-1.03L256 224.27l-80.1 47.89c-3.53 2.11-8.1.96-10.22-2.58a7.365 7.365 0 0 1-.87-5.48l-.01-.01 20.8-90.98-70.3-61.38a7.445 7.445 0 0 1-.7-10.52 7.448 7.448 0 0 1 5.21-2.53l92.67-8.31 36.65-85.82c1.62-3.8 6-5.57 9.79-3.95 1.87.79 3.25 2.26 3.97 3.99zM119.79 27.6 92.75 90.9a7.61 7.61 0 0 1-6.8 4.64l-68.1 6.12 51.85 45.27a7.653 7.653 0 0 1 2.42 7.46l-15.33 67.1 59.08-35.32c2.51-1.5 5.53-1.39 7.88.03l27.05 16.17-3.57 15.65-27.44-16.4-58.58 35.02c-1.44.89-3.05 1.52-4.74 1.82-1.74.31-3.57.28-5.35-.12-3.65-.82-6.61-3.06-8.44-5.96-1.83-2.93-2.56-6.57-1.73-10.19l15.26-66.77-52.28-45.69c-.83-.83-1.56-1.78-2.15-2.81l-.31-.57c-.7-1.37-1.17-2.88-1.37-4.48l-.07-.82c-.22-3.56.98-6.9 3.13-9.47 2.14-2.55 5.22-4.31 8.75-4.73l68.57-6.13 26.89-62.95c.69-1.61 1.66-3.09 2.86-4.29 1.04-1.02 2.27-1.91 3.67-2.58l.61-.29c3.41-1.46 7.12-1.4 10.33-.11 3.2 1.3 5.91 3.81 7.36 7.23l21.54 50.43-16 1.44-17.95-42z';
+const CONSTELLATION_VIEWBOX = '0 0 512 273.23';
+
+// Native viewBox 0 0 512 489.255. Single 5-point outline star.
+const STAR_PATH =
+  'M278.56 16.223l59.371 139.027 152.968 13.689c6.245.681 11.71 3.801 15.512 8.326 3.833 4.52 5.956 10.445 5.537 16.752l-.082.976c-.935 9.261-5.16 12.903-10.264 17.294-37.836 32.687-75.389 65.812-113.055 98.705l34.123 149.312a23.633 23.633 0 01-3.012 17.825 23.583 23.583 0 01-14.793 10.543l-.595.119c-6.074 1.219-12.464.02-17.65-3.378l-130.623-78.112-131.443 78.587a23.6 23.6 0 01-17.899 2.655 23.638 23.638 0 01-14.546-10.822c-3.92-6.56-3.956-12.294-2.308-19.494l33.652-147.24L8.094 210.267a23.58 23.58 0 01-8.042-16.219 23.627 23.627 0 015.801-17.134c4.122-4.835 10.206-7.722 16.534-8.068l151.666-13.596L234.21 14.405c2.552-6.007 7.329-10.418 12.96-12.691a23.635 23.635 0 0118.094.175c6.963 2.96 10.429 7.604 13.296 14.334zm41.855 153.558L258.487 24.767c-.491-1.157-.925-2.107-1.255-2.526l-.511-.279a1.907 1.907 0 00-1.441-.01 1.847 1.847 0 00-.997.997l-62.714 146.832c-1.549 3.574-4.948 6.219-9.096 6.575L23.585 190.623c-.614.026-.831.258-1.27.62-.718.718-.62 1.973.129 2.629l119.785 104.584a10.912 10.912 0 013.947 11.054l-35.104 153.583c-.3 1.312-.532 2.412-.517 2.923l.264.517c.253.424.671.718 1.136.831.47.114.987.068 1.41-.185l136.894-81.841c3.352-2.071 7.717-2.252 11.332-.088l136.982 81.887c.186.124.429.223.687.264.165.072.367.067.594.036l.145-.036c.49-.109.898-.419 1.136-.796l.041-.041c.238-.382.336-.894.222-1.395l-35.574-155.654c-.847-3.781.341-7.898 3.461-10.63 39.335-34.35 78.54-68.953 118.05-103.086 1.477-1.276 2.707-2.33 2.8-3.141.083-1.053-.574-1.901-1.643-1.994l-158.355-14.251c-4.128-.124-8.002-2.588-9.722-6.632z';
+const STAR_VIEWBOX = '0 0 512 489.255';
+
+// Each item's real rendered height, as a multiple of its own `width` — used by
+// layoutTrack() below to pack items with a guaranteed non-overlapping gap. Plane/
+// planet/constellation/star ratios come straight from their SVG viewBox proportions;
+// astronaut is padded above its actual square (512x512) image ratio to account for the
+// flag, which is composited overlapping the top-right corner (see .astronaut-flag).
+const ASPECT: Record<string, number> = {
+  plane: 60 / 90,
+  astronaut: 1.15,
+  planet: 97.05 / 122.88,
+  constellation: 273.23 / 512,
+  star: 489.255 / 512,
+};
+
+// Measured rendered height of `.decorated-content` (index.astro) across the
+// 1024-1440px desktop range this component is shown at: ~1436-1485px. A mid-range
+// figure keeps this safe in both directions — see the file-level comment above.
+const REFERENCE_HEIGHT = 1460;
+const MIN_GAP = 40;
+
+type DecorItem = {
+  type: 'plane' | 'astronaut' | 'planet' | 'constellation' | 'star';
+  side: 'left' | 'right';
+  width: number;
+  opacity: number;
+  flip?: boolean;
+  color?: string;
+  start?: [number, number];
+  end?: [number, number];
+  loopRadius?: number;
+  loopTurns?: number;
+  loopDir?: 1 | -1;
+};
+
+// Stacks a track's items top-to-bottom with a minimum gap, then — since there's
+// usually slack left in REFERENCE_HEIGHT once every item's real height is accounted
+// for — spreads that slack evenly into every gap (including above the first item and
+// below the last) rather than bunching everything at the top. Guarantees no overlap
+// by construction: each item's `topPercent` sits strictly after the previous item's
+// bottom edge plus the gap.
+function layoutTrack<T extends { width: number; type: string }>(items: T[]) {
+  const heights = items.map((it) => it.width * ASPECT[it.type]);
+  const totalHeight = heights.reduce((sum, h) => sum + h, 0);
+  const gapCount = items.length + 1;
+  const gap = Math.max(MIN_GAP, (REFERENCE_HEIGHT - totalHeight) / gapCount);
+  let cursor = gap;
+  return items.map((it, i) => {
+    const topPercent = (cursor / REFERENCE_HEIGHT) * 100;
+    cursor += heights[i] + gap;
+    return { ...it, topPercent };
   });
-  return { ...p, pathD, endAngleDeg, endX: p.end[0], endY: p.end[1] };
+}
+
+// Two independently-laid-out tracks (left/right edge), each mixing every decor type in
+// an interleaved, non-grouped order for an organic/"random" feel rather than banding
+// all the planes together, then all the astronauts, etc. Plane items carry their
+// loop-trail config (start/end/loopRadius/loopTurns/loopDir); layoutTrack() only reads
+// `width`/`type` and passes every other field through untouched.
+const LEFT_ITEMS: DecorItem[] = [
+  { type: 'plane', side: 'left', width: 105, opacity: 0.4, start: [-6, 30], end: [60, 13], loopRadius: 9, loopTurns: 1.2, loopDir: 1 },
+  { type: 'star', side: 'left', width: 20, opacity: 0.35 },
+  { type: 'astronaut', side: 'left', width: 52, opacity: 0.32, flip: false },
+  { type: 'planet', side: 'left', width: 38, opacity: 0.3, color: '#e893c2' },
+  { type: 'constellation', side: 'left', width: 56, opacity: 0.28 },
+  { type: 'plane', side: 'left', width: 85, opacity: 0.28, start: [-6, 8], end: [66, 40], loopRadius: 7, loopTurns: 1.05, loopDir: -1 },
+  { type: 'star', side: 'left', width: 22, opacity: 0.3 },
+  { type: 'planet', side: 'left', width: 42, opacity: 0.28, color: '#6fd19a' },
+  { type: 'astronaut', side: 'left', width: 54, opacity: 0.28, flip: false },
+  { type: 'star', side: 'left', width: 18, opacity: 0.32 },
+  { type: 'plane', side: 'left', width: 119, opacity: 0.34, start: [-6, 48], end: [58, 18], loopRadius: 10, loopTurns: 1.3, loopDir: 1 },
+  { type: 'constellation', side: 'left', width: 52, opacity: 0.24 },
+  { type: 'planet', side: 'left', width: 46, opacity: 0.34, color: '#e0736f' },
+  { type: 'plane', side: 'left', width: 78, opacity: 0.24, start: [-6, 20], end: [70, 50], loopRadius: 6, loopTurns: 1.0, loopDir: -1 },
+];
+
+const RIGHT_ITEMS: DecorItem[] = [
+  { type: 'plane', side: 'right', width: 109, opacity: 0.4, start: [96, 26], end: [28, 9], loopRadius: 9, loopTurns: 1.15, loopDir: -1 },
+  { type: 'star', side: 'right', width: 24, opacity: 0.34 },
+  { type: 'planet', side: 'right', width: 44, opacity: 0.34, color: '#e0736f' },
+  { type: 'constellation', side: 'right', width: 58, opacity: 0.3 },
+  { type: 'plane', side: 'right', width: 82, opacity: 0.28, start: [96, 6], end: [22, 38], loopRadius: 7, loopTurns: 1.1, loopDir: 1 },
+  { type: 'astronaut', side: 'right', width: 59, opacity: 0.3, flip: true },
+  { type: 'star', side: 'right', width: 20, opacity: 0.28 },
+  { type: 'planet', side: 'right', width: 50, opacity: 0.32, color: '#a97fd1' },
+  { type: 'plane', side: 'right', width: 126, opacity: 0.36, start: [96, 46], end: [34, 16], loopRadius: 10.5, loopTurns: 1.25, loopDir: -1 },
+  { type: 'star', side: 'right', width: 22, opacity: 0.3 },
+  { type: 'planet', side: 'right', width: 36, opacity: 0.3, color: '#e893c2' },
+  { type: 'plane', side: 'right', width: 75, opacity: 0.22, start: [96, 20], end: [20, 48], loopRadius: 6.5, loopTurns: 1.0, loopDir: 1 },
+];
+
+const ALL_ITEMS = [...layoutTrack(LEFT_ITEMS), ...layoutTrack(RIGHT_ITEMS)];
+
+const PLANE_CONFIGS = ALL_ITEMS.filter((it) => it.type === 'plane').map((p) => {
+  const { pathD, endAngleDeg } = buildLoopTrail({
+    startX: p.start![0],
+    startY: p.start![1],
+    endX: p.end![0],
+    endY: p.end![1],
+    loopRadius: p.loopRadius!,
+    loopTurns: p.loopTurns!,
+    loopDirection: p.loopDir!,
+  });
+  return { ...p, pathD, endAngleDeg, endX: p.end![0], endY: p.end![1] };
 });
-
-// 3 astronauts, spread wider down the page — "random"/asymmetric, not aligned with the
-// plane rows. Aspect ratio is now square (native PNG is 512x512) rather than the old
-// SVG's portrait 102.3x122.88 — width still drives the rendered size, height follows
-// via aspect-ratio in CSS.
-const ASTRONAUT_CONFIGS = [
-  { side: 'left', top: '8%', width: 58, opacity: 0.32, flip: false },
-  { side: 'right', top: '42%', width: 66, opacity: 0.3, flip: true },
-  { side: 'left', top: '80%', width: 60, opacity: 0.28, flip: false },
-];
-
-// 6 planets (was 3) — "more", each a distinct slightly-transparent color per the 4
-// requested (cycling red/pink/purple/green across the 6 slots). Colors picked as soft/
-// muted versions rather than saturated primaries, to sit against the dark navy base
-// the same way the existing violet --accent does, and flagged here since exact hex
-// wasn't specified: red #e0736f, pink #e893c2, purple #a97fd1, green #6fd19a.
-const PLANET_COLORS = { red: '#e0736f', pink: '#e893c2', purple: '#a97fd1', green: '#6fd19a' };
-const PLANET_CONFIGS = [
-  { side: 'right', top: '5%', width: 44, opacity: 0.34, color: PLANET_COLORS.red },
-  { side: 'left', top: '19%', width: 38, opacity: 0.3, color: PLANET_COLORS.pink },
-  { side: 'right', top: '36%', width: 50, opacity: 0.32, color: PLANET_COLORS.purple },
-  { side: 'left', top: '53%', width: 42, opacity: 0.28, color: PLANET_COLORS.green },
-  { side: 'right', top: '71%', width: 36, opacity: 0.3, color: PLANET_COLORS.pink },
-  { side: 'left', top: '90%', width: 46, opacity: 0.34, color: PLANET_COLORS.red },
-];
+const ASTRONAUT_CONFIGS = ALL_ITEMS.filter((it) => it.type === 'astronaut');
+const PLANET_CONFIGS = ALL_ITEMS.filter((it) => it.type === 'planet');
+const CONSTELLATION_CONFIGS = ALL_ITEMS.filter((it) => it.type === 'constellation');
+const STAR_CONFIGS = ALL_ITEMS.filter((it) => it.type === 'star');
 ---
 
 <div class="space-decor" aria-hidden="true">
@@ -124,7 +211,7 @@ const PLANET_CONFIGS = [
     PLANE_CONFIGS.map((p) => (
       <svg
         class={`plane plane-${p.side}`}
-        style={`top:${p.top}; ${p.side}:-${Math.round(p.width * 0.32)}px; width:${p.width}px; opacity:${p.opacity};`}
+        style={`top:${p.topPercent.toFixed(2)}%; ${p.side}:-${Math.round(p.width * 0.32)}px; width:${p.width}px; opacity:${p.opacity};`}
         viewBox="0 0 90 60"
       >
         <path d={p.pathD} class="plane-trail" />
@@ -141,7 +228,7 @@ const PLANET_CONFIGS = [
     ASTRONAUT_CONFIGS.map((a) => (
       <div
         class={`astronaut astronaut-${a.side}`}
-        style={`top:${a.top}; ${a.side}:${Math.round(a.width * 0.1)}px; width:${a.width}px; opacity:${a.opacity}; ${a.flip ? 'transform:scaleX(-1);' : ''}`}
+        style={`top:${a.topPercent.toFixed(2)}%; ${a.side}:${Math.round(a.width * 0.1)}px; width:${a.width}px; opacity:${a.opacity}; ${a.flip ? 'transform:scaleX(-1);' : ''}`}
       >
         <Image src={astronautFloating} alt="" width={200} height={200} class="astronaut-img" />
         <svg class="astronaut-flag" viewBox={FLAG_VIEWBOX}>
@@ -155,10 +242,34 @@ const PLANET_CONFIGS = [
     PLANET_CONFIGS.map((p) => (
       <svg
         class={`planet planet-${p.side}`}
-        style={`top:${p.top}; ${p.side}:${Math.round(p.width * 0.08)}px; width:${p.width}px; opacity:${p.opacity};`}
+        style={`top:${p.topPercent.toFixed(2)}%; ${p.side}:${Math.round(p.width * 0.08)}px; width:${p.width}px; opacity:${p.opacity};`}
         viewBox={SATURN_VIEWBOX}
       >
         <path d={SATURN_PATH} style={`fill:${p.color};`} />
+      </svg>
+    ))
+  }
+
+  {
+    CONSTELLATION_CONFIGS.map((c) => (
+      <svg
+        class={`constellation constellation-${c.side}`}
+        style={`top:${c.topPercent.toFixed(2)}%; ${c.side}:${Math.round(c.width * 0.05)}px; width:${c.width}px; opacity:${c.opacity};`}
+        viewBox={CONSTELLATION_VIEWBOX}
+      >
+        <path class="deco-icon" fill-rule="nonzero" d={CONSTELLATION_PATH} />
+      </svg>
+    ))
+  }
+
+  {
+    STAR_CONFIGS.map((s) => (
+      <svg
+        class={`star star-${s.side}`}
+        style={`top:${s.topPercent.toFixed(2)}%; ${s.side}:${Math.round(s.width * 0.15)}px; width:${s.width}px; opacity:${s.opacity};`}
+        viewBox={STAR_VIEWBOX}
+      >
+        <path class="deco-icon" fill-rule="nonzero" d={STAR_PATH} />
       </svg>
     ))
   }
@@ -175,7 +286,9 @@ const PLANET_CONFIGS = [
 
   .plane,
   .astronaut,
-  .planet {
+  .planet,
+  .constellation,
+  .star {
     position: absolute;
     height: auto;
     overflow: visible;

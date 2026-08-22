@@ -31,41 +31,53 @@ const otherBlocks = allBlocks
 
 <Layout title="PWeb — Layout Pilot">
   <div class="page-body">
-    <SpaceDecor />
-
     <Hero />
 
-    <section id="projects" class="project-list">
-      {mainBlocks.map((block) => <ProjectCard block={block} />)}
-    </section>
+    <!-- SpaceDecor is scoped to this wrapper (below the hero), not the whole page-body
+         — see SpaceDecor.astro's own comment. That's what guarantees none of the
+         decorative graphics can ever overlap the hero banner: they're positioned
+         relative to a box that starts after it, not by tuning percentages against the
+         hero's own (viewport-height-dependent, so unpredictable) size. -->
+    <div class="decorated-content">
+      <SpaceDecor />
 
-    {
-      otherBlocks.length > 0 && (
-        <>
-          <div class="other-divider" role="separator">
-            <span class="line" />
-            <span class="label">Other</span>
-            <span class="line" />
-          </div>
-          <section class="project-list other-list">
-            {otherBlocks.map((block) => (
-              <ProjectCard block={block} />
-            ))}
-          </section>
-        </>
-      )
-    }
+      <section id="projects" class="project-list">
+        {mainBlocks.map((block) => <ProjectCard block={block} />)}
+      </section>
+
+      {
+        otherBlocks.length > 0 && (
+          <>
+            <div class="other-divider" role="separator">
+              <span class="line" />
+              <span class="label">Other</span>
+              <span class="line" />
+            </div>
+            <section class="project-list other-list">
+              {otherBlocks.map((block) => (
+                <ProjectCard block={block} />
+              ))}
+            </section>
+          </>
+        )
+      }
+    </div>
   </div>
 </Layout>
 
 <style>
   .page-body {
-    /* Positioning context + width constraint for SpaceDecor's page-length overlay —
-       see SpaceDecor.astro's own comment for why this needs a max-width rather than
-       spanning the true viewport edge-to-edge. */
-    position: relative;
+    /* Width constraint for SpaceDecor's overlay — see SpaceDecor.astro's own comment
+       for why this needs a max-width rather than spanning the true viewport
+       edge-to-edge. */
     max-width: 1200px;
     margin: 0 auto;
+  }
+
+  .decorated-content {
+    /* Positioning context for SpaceDecor — scoped to below the hero specifically, see
+       the comment above the <SpaceDecor /> usage. */
+    position: relative;
   }
 
   .project-list {
