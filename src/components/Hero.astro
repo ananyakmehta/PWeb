@@ -130,16 +130,25 @@ const TILE_CONFIGS = [
 
   /* JS-enhanced state (class added by the script below, only when motion is allowed
      and the viewport is wide enough): tall scroll runway + sticky pin + absolute,
-     JS-controlled tile geometry. */
+     JS-controlled tile geometry. Both heights below are placeholders, immediately
+     overridden by inline styles the script sets in the same synchronous call that
+     adds this class (see STICKY_HEIGHT in the script) — the real values live there,
+     as the single source of truth, not here. Kept here only as a same-ballpark
+     fallback for the imperceptibly brief instant before that inline style lands. */
   .hero-pinzone.mosaic-live {
-    height: 200vh;
+    height: calc(100vh + 420px);
   }
 
   .hero-pinzone.mosaic-live .hero-sticky {
     position: sticky;
     top: 0;
-    height: 100vh;
-    overflow: hidden;
+    height: 420px;
+    /* Not hidden: while pinned, the mosaic-frame child is absolutely positioned and
+       sized up to window.innerHeight (full-bleed at progress 0) — taller than this
+       box's own (deliberately short, see STICKY_HEIGHT) height. Visible lets it
+       paint at full size regardless; this box's own height only exists to control
+       *when* position:sticky releases, not to contain/clip its content. */
+    overflow: visible;
   }
 
   .hero-pinzone.mosaic-live .mosaic-frame {
@@ -206,7 +215,8 @@ const TILE_CONFIGS = [
   // Safari's address-bar-driven 100vh changes, so it isn't worth chasing there).
   const pinzone = document.getElementById('heroPinzone');
   const frame = document.getElementById('mosaicFrame');
-  if (!pinzone || !frame) throw new Error('Hero mosaic: expected elements not found');
+  const sticky = pinzone?.querySelector('.hero-sticky');
+  if (!pinzone || !frame || !sticky) throw new Error('Hero mosaic: expected elements not found');
 
   const tiles = Array.from(frame.querySelectorAll('.mosaic-tile'));
   const tileData = tiles.map((el) => ({
@@ -218,6 +228,22 @@ const TILE_CONFIGS = [
   const motionOk = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const widthOk = () => window.innerWidth > 720;
 
+  // Banner geometry, hoisted so both update() (tile positions) and syncMode() (the
+  // sticky box's own height) read the same numbers — no separate copy to drift out
+  // of sync. STICKY_HEIGHT is deliberately just the banner's own footprint (plus a
+  // little buffer for a non-abrupt hand-off), not a full 100vh: .hero-sticky's own
+  // height is what CSS position:sticky uses to decide when to release, and making it
+  // match the banner's real size (rather than the full viewport) is what keeps the
+  // "banner scrolls away → hero-copy arrives" hand-off tight instead of leaving a
+  // long stretch of empty scroll between them (the banner sits near the *top* of the
+  // sticky box; a full-viewport-tall box meant a lot of scroll after the banner
+  // itself had already scrolled out before the box "ran out" and released).
+  const NAV_HEIGHT = 64;
+  const BANNER_HEIGHT = 280;
+  const BANNER_TOP = NAV_HEIGHT + 32;
+  const EXIT_BUFFER = 40;
+  const STICKY_HEIGHT = BANNER_TOP + BANNER_HEIGHT + EXIT_BUFFER;
+
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
@@ -228,21 +254,18 @@ const TILE_CONFIGS = [
 
   function update() {
     const rect = pinzone.getBoundingClientRect();
-    const scrollableHeight = pinzone.offsetHeight - window.innerHeight;
+    const scrollableHeight = pinzone.offsetHeight - STICKY_HEIGHT;
     const raw = scrollableHeight > 0 ? -rect.top / scrollableHeight : 1;
     const progress = Math.min(1, Math.max(0, raw));
     const eased = easeInOutCubic(progress);
 
-    const navHeight = 64;
-    const bannerHeight = 280;
     const bannerMaxWidth = Math.min(1200, window.innerWidth - 48);
     const bannerLeft = (window.innerWidth - bannerMaxWidth) / 2;
-    const bannerTop = navHeight + 32;
 
-    frame.style.top = `${lerp(0, bannerTop, eased)}px`;
+    frame.style.top = `${lerp(0, BANNER_TOP, eased)}px`;
     frame.style.left = `${lerp(0, bannerLeft, eased)}px`;
     frame.style.width = `${lerp(window.innerWidth, bannerMaxWidth, eased)}px`;
-    frame.style.height = `${lerp(window.innerHeight, bannerHeight, eased)}px`;
+    frame.style.height = `${lerp(window.innerHeight, BANNER_HEIGHT, eased)}px`;
     frame.style.borderRadius = `${lerp(0, 16, eased)}px`;
 
     for (const t of tileData) {
@@ -273,10 +296,17 @@ const TILE_CONFIGS = [
 
     if (liveMode) {
       pinzone.classList.add('mosaic-live');
+      // Single source of truth for both heights — see STICKY_HEIGHT above. Set here,
+      // synchronously before the first paint of this state, so the CSS class's own
+      // placeholder values are never actually visible.
+      pinzone.style.height = `calc(100vh + ${STICKY_HEIGHT}px)`;
+      sticky.style.height = `${STICKY_HEIGHT}px`;
       window.addEventListener('scroll', onScroll, { passive: true });
       update();
     } else {
       pinzone.classList.remove('mosaic-live');
+      pinzone.style.removeProperty('height');
+      sticky.style.removeProperty('height');
       window.removeEventListener('scroll', onScroll);
       frame.removeAttribute('style');
       for (const t of tileData) t.el.removeAttribute('style');
