@@ -14,7 +14,6 @@ import { getCollection } from 'astro:content';
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
 import ProjectCard from '../components/ProjectCard.astro';
-import SpaceDecor from '../components/SpaceDecor.astro';
 
 const allBlocks = await getCollection('blocks');
 
@@ -33,64 +32,30 @@ const otherBlocks = allBlocks
   <div class="page-body">
     <Hero />
 
-    <!-- SpaceDecor is scoped to this wrapper (below the hero), not the whole page-body
-         — see SpaceDecor.astro's own comment. That's what guarantees none of the
-         decorative graphics can ever overlap the hero banner: they're positioned
-         relative to a box that starts after it, not by tuning percentages against the
-         hero's own (viewport-height-dependent, so unpredictable) size. -->
-    <div class="decorated-content">
-      <SpaceDecor />
+    <section id="projects" class="project-list">
+      {mainBlocks.map((block) => <ProjectCard block={block} />)}
+    </section>
 
-      <section id="projects" class="project-list">
-        {mainBlocks.map((block) => <ProjectCard block={block} />)}
-      </section>
-
-      {
-        otherBlocks.length > 0 && (
-          <>
-            <div class="other-divider" role="separator">
-              <span class="line" />
-              <span class="label">Other</span>
-              <span class="line" />
-            </div>
-            <section class="project-list other-list">
-              {otherBlocks.map((block) => (
-                <ProjectCard block={block} />
-              ))}
-            </section>
-          </>
-        )
-      }
-    </div>
+    {
+      otherBlocks.length > 0 && (
+        <>
+          <div class="other-divider" role="separator">
+            <span class="line" />
+            <span class="label">Other</span>
+            <span class="line" />
+          </div>
+          <section class="project-list other-list">
+            {otherBlocks.map((block) => (
+              <ProjectCard block={block} />
+            ))}
+          </section>
+        </>
+      )
+    }
   </div>
 </Layout>
 
 <style>
-  .page-body {
-    /* Width constraint for SpaceDecor's overlay — see SpaceDecor.astro's own comment
-       for why this needs a max-width rather than spanning the true viewport
-       edge-to-edge. */
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-
-  .decorated-content {
-    /* Positioning context for SpaceDecor — scoped to below the hero specifically, see
-       the comment above the <SpaceDecor /> usage. */
-    position: relative;
-    /* SpaceDecor's items intentionally bleed past their own edge here (see its own
-       comment on horizontal placement) — fine at wide viewports where page-body's
-       centering margin absorbs it, but below the 1200px breakpoint that margin is
-       zero, so the bleed would otherwise reach the true viewport edge and create a
-       horizontal scrollbar. Clipping it here, rather than on html/body, is
-       deliberate: overflow-x:hidden on html/body breaks position:sticky for any
-       descendant (the hero's scroll-pinned mosaic being exactly that) — this
-       container is a sibling of Hero, not an ancestor of it, so it can clip
-       SpaceDecor's own bleed without ever being in the hero's ancestor chain.
-       Confirmed via Playwright that this still fully suppresses the scrollbar. */
-    overflow-x: hidden;
-  }
-
   .project-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);

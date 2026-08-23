@@ -26,6 +26,7 @@ import tileC from '../assets/hero/mosaic/C.svg';
 import tileD from '../assets/hero/mosaic/D.svg';
 import tileE from '../assets/hero/mosaic/E.svg';
 import tileF from '../assets/hero/mosaic/F.svg';
+import childOnSwing from '../assets/decor/child-on-swing.png';
 
 const links = [
   { label: 'GitHub', href: '#' },
@@ -107,6 +108,17 @@ const TILE_CONFIGS = [
       }
     </div>
 
+    <!-- Real, sourced icon — not hand-drawn — per direct instruction. "child on swing"
+         by Maxim Kulikov, Noun Project, CC BY 3.0 (credited in Footer.astro). Includes
+         its own ropes/seat, so it's a single self-contained decoration, not composited
+         from separate pieces like the earlier astronaut+flag was. Black-line-on
+         -transparent PNG (Noun Project gates SVG behind a paid API, same situation as
+         the icon it's replacing), tinted white via CSS filter to read against the dark
+         open background it mostly sits over. -->
+    <div class="swing" id="heroSwing" aria-hidden="true">
+      <Image src={childOnSwing} alt="" width={200} height={200} />
+    </div>
+
     <div class="hero-copy" id="heroCopy">
       <div class="hero-copy-inner">
         <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
@@ -136,13 +148,11 @@ const TILE_CONFIGS = [
      file-level comment on why this doesn't try to approximate the outline. */
   .hero-pinzone {
     height: auto;
-    /* Breakout: index.astro nests Hero inside .page-body's max-width:1200px wrapper
-       (for SpaceDecor's positioning), but the mosaic needs to span the TRUE viewport
-       edge-to-edge, not just 1200px — the whole point of the outline is that it
-       reaches the real edges. This standard full-bleed trick extends it back to the
-       real viewport width regardless of the ancestor's constraint; .mosaic-frame's
-       own max-width:1200px (below) still keeps the fallback banner correctly
-       centered within it. */
+    /* Breakout: harmless no-op now that .page-body has no width constraint of its own
+       (kept for robustness in case that changes again) — the mosaic needs to span the
+       TRUE viewport edge-to-edge regardless, not whatever an ancestor happens to be
+       constrained to. .mosaic-frame's own max-width:1200px (below) still keeps the
+       fallback banner correctly centered within it. */
     width: 100vw;
     margin-left: calc(50% - 50vw);
   }
@@ -213,6 +223,41 @@ const TILE_CONFIGS = [
   .hero-pinzone.mosaic-live .mosaic-tile {
     position: absolute;
     /* left/top/width/height set inline by the script, every frame */
+  }
+
+  /* Not shown at all outside live mode — this is purely a flourish on the
+     scroll-pinned outline effect, not something the static fallback needs to
+     approximate (same call as SpaceDecor's old desktop-only decorations). */
+  .swing {
+    display: none;
+  }
+
+  /* Live mode: positioned hanging from the lower portion of the last (bottom-most)
+     left-side outline tile — see TILE_CONFIGS' tile C, which spans the left band's
+     lower half down to the very bottom edge. Anchored partway down that tile rather
+     than exactly at its bottom edge (which is the true viewport edge, y:100%) so the
+     character has room to hang below the rope tops and still stay fully on-screen.
+     Opacity set inline by the script: fades in late in the pin phase (paired with the
+     outline finishing forming) and fades back out once you scroll past it. */
+  .hero-pinzone.mosaic-live .swing {
+    display: block;
+    position: absolute;
+    left: 4%;
+    top: 76%;
+    width: 130px;
+    z-index: 3;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .swing :global(img) {
+    width: 100%;
+    height: auto;
+    display: block;
+    /* Source PNG is black-on-transparent (Noun Project's export) — forced white to
+       read against the dark open background it mostly sits over, rather than tinting
+       via currentColor/fill, which doesn't apply to raster images. */
+    filter: brightness(0) invert(1);
   }
 
   .hero-copy {
@@ -297,7 +342,8 @@ const TILE_CONFIGS = [
   const pinzone = document.getElementById('heroPinzone');
   const frame = document.getElementById('mosaicFrame');
   const heroCopy = document.getElementById('heroCopy');
-  if (!pinzone || !frame || !heroCopy) throw new Error('Hero mosaic: expected elements not found');
+  const swing = document.getElementById('heroSwing');
+  if (!pinzone || !frame || !heroCopy || !swing) throw new Error('Hero mosaic: expected elements not found');
 
   const tiles = Array.from(frame.querySelectorAll('.mosaic-tile'));
   const tileData = tiles.map((el) => ({
@@ -314,6 +360,15 @@ const TILE_CONFIGS = [
   // still-mostly-closed mosaic would just look like it's popping in over a photo.
   const TEXT_FADE_START = 0.3;
 
+  // The swing fades in later than the text (closer to the outline actually being
+  // finished, per "as the images rearrange into their border, fade in") and fades
+  // back out once you scroll past the pinned phase, per "fade out as you scroll down
+  // from there" — SWING_RELEASE_FADE_RANGE is how much of the *release* scroll
+  // (after progress has already hit 1 and the pin is letting go) it takes to fully
+  // disappear, not a fraction of the whole pinzone.
+  const SWING_FADE_START = 0.65;
+  const SWING_RELEASE_FADE_RANGE = 0.35;
+
   function lerp(a, b, t) {
     return a + (b - a) * t;
   }
@@ -325,8 +380,12 @@ const TILE_CONFIGS = [
   function update() {
     const rect = pinzone.getBoundingClientRect();
     const scrollableHeight = pinzone.offsetHeight - window.innerHeight;
+    // Unclamped: needed both for progress (0-1, the pin/outline phase) and for how far
+    // *past* 1 we are once the pin has released (the release phase) — see overshoot
+    // below, which drives the swing's fade-out.
     const raw = scrollableHeight > 0 ? -rect.top / scrollableHeight : 1;
     const progress = Math.min(1, Math.max(0, raw));
+    const overshoot = Math.max(0, raw - 1);
     const eased = easeInOutCubic(progress);
 
     for (const t of tileData) {
@@ -338,6 +397,10 @@ const TILE_CONFIGS = [
 
     const textOpacity = Math.max(0, Math.min(1, (progress - TEXT_FADE_START) / (1 - TEXT_FADE_START)));
     heroCopy.style.opacity = textOpacity.toFixed(2);
+
+    const swingFadeIn = Math.max(0, Math.min(1, (progress - SWING_FADE_START) / (1 - SWING_FADE_START)));
+    const swingFadeOut = 1 - Math.max(0, Math.min(1, overshoot / SWING_RELEASE_FADE_RANGE));
+    swing.style.opacity = (swingFadeIn * swingFadeOut).toFixed(2);
   }
 
   let liveMode = false;
@@ -367,6 +430,7 @@ const TILE_CONFIGS = [
       window.removeEventListener('scroll', onScroll);
       frame.removeAttribute('style');
       heroCopy.removeAttribute('style');
+      swing.removeAttribute('style');
       for (const t of tileData) t.el.removeAttribute('style');
     }
   }
