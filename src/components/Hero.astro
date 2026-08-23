@@ -54,7 +54,10 @@ const SIDE_W = 14; // width of the two corner tiles (B, E) and the two tiles bel
 // stacked in that column. That's what makes the outline shorter overall: nothing
 // reaches past C_BOTTOM on the sides anymore, and C_BOTTOM is deliberately the same
 // value the old B/E tiles' own bottom edge used to be at, not a fresh calculation.
-const SIDE_TILE_HEIGHT = 33;
+const SIDE_TILE_HEIGHT = 40; // was 33 — increased per direct instruction to have the open/outline
+// state "extend a bit further downwards"; this scales C/F (and, via C_BOTTOM below,
+// the swing + its hint, which attach to C's bottom edge) rather than repositioning
+// anything by hand.
 const CENTER_TOP_W = (100 - SIDE_W * 2) / 2; // A/D's new (narrower) width, splitting whatever's left of the top row after the two corner tiles claim SIDE_W on each end
 const C_BOTTOM = TOP_H + SIDE_TILE_HEIGHT; // where C's bottom edge is now — also where the swing/hint attach (see --swingTop below), unchanged in *effect*: they move up together with C, per direct instruction
 const SWING_LEFT = SIDE_W / 2; // horizontal midpoint of the left column, in line with tile C's own center rather than pinned to the outer edge
@@ -110,79 +113,95 @@ const TILE_CONFIGS = [
 
 <div class="hero-pinzone" id="heroPinzone" data-top-h={TOP_H} data-c-bottom={C_BOTTOM}>
   <div class="hero-sticky" id="heroSticky">
-    <div class="mosaic-frame" id="mosaicFrame">
-      {
-        TILE_CONFIGS.map((t) => (
-          <div
-            class="mosaic-tile"
-            data-tile={t.id}
-            data-mosaic={JSON.stringify(t.mosaic)}
-            data-outline={JSON.stringify(t.outline)}
-          >
-            <Image src={t.src} alt="" width={900} height={700} />
-          </div>
-        ))
-      }
-    </div>
-
-    <!-- Real, sourced icon — not hand-drawn — per direct instruction: an adult figure
-         (not a child), as minimalist as possible — a flat solid silhouette, not
-         line-art. "Man Swinging" by Gan Khoon Lay, Noun Project, CC BY 3.0 (credited
-         in Footer.astro). The source icon includes its own A-frame support, which
-         competed with the illusion of hanging from the photo above it — per direct
-         feedback, .swing-crop below crops that out via plain CSS (an oversized,
-         negatively-offset copy of the same unmodified asset inside a fixed, clipped
-         box; see the coordinates comment in the <style> block), keeping only the
-         person, seat, and the short stub of rope nearest the seat — not a second
-         asset, not any pixel-level editing, the exact same source PNG framed
-         differently. That stub is what visually "attaches" to the tile's bottom edge
-         once positioned there. -->
-    <div class="swing" id="heroSwing" aria-hidden="true">
-      <div class="swing-crop">
-        <Image src={manSwinging} alt="" width={512} height={512} />
+    <!-- .hero-stage exists purely as a fixed-100vh positioning basis for the three
+         children below, all of which are position:absolute and sized/placed via
+         percentages (tile inset math, --topH/--sideW, --swingTop/--swingLeft) that
+         were designed assuming a full-viewport box to resolve against. .hero-sticky
+         itself can no longer be that box: its own CSS height is now dynamically
+         content-fit (see computeStickyHeight() in the script) and often shorter than
+         100vh, and percentages on an absolutely-positioned element resolve against
+         its NEAREST POSITIONED ANCESTOR's own box, not the viewport. Without this
+         wrapper each child would independently resolve its percentages against
+         .hero-sticky's own shrunk height and land in the wrong place (caught for
+         real: the swing rendered ~180px too high, well inside tile C instead of
+         hanging below it, because top:60% was 60% of .hero-sticky's ~595px instead
+         of the viewport's 900px). One 100vh, position:relative wrapper fixes all
+         three at once instead of special-casing each child's own height/top math. -->
+    <div class="hero-stage" id="heroStage">
+      <div class="mosaic-frame" id="mosaicFrame">
+        {
+          TILE_CONFIGS.map((t) => (
+            <div
+              class="mosaic-tile"
+              data-tile={t.id}
+              data-mosaic={JSON.stringify(t.mosaic)}
+              data-outline={JSON.stringify(t.outline)}
+            >
+              <Image src={t.src} alt="" width={900} height={700} />
+            </div>
+          ))
+        }
       </div>
 
-      <!-- Fun easter egg, direct instruction, one of 4 identical placements on this
-           page — see the shared-base comment in global.css's .konami-hint rule and
-           src/lib/konamiHint.ts for how the hover-reveal itself works. Nested inside
-           .swing specifically so it inherits the swing's own scroll-driven opacity
-           (CSS compounds a child's opacity with its ancestors' — see global.css) —
-           it literally cannot render even translucently outside the swing's own
-           visible window, with no extra JS needed to enforce that. Positioned with
-           simple offsets relative to .swing's own (already correctly placed) box
-           rather than the frame-relative --swingTop/--swingLeft vars .swing itself
-           uses, since as a descendant it doesn't need to re-derive that position. -->
-      <p class="konami-hint konami-hint--swing" aria-hidden="true">konami code?</p>
-    </div>
+      <!-- Real, sourced icon — not hand-drawn — per direct instruction: an adult figure
+           (not a child), as minimalist as possible — a flat solid silhouette, not
+           line-art. "Man Swinging" by Gan Khoon Lay, Noun Project, CC BY 3.0 (credited
+           in Footer.astro). The source icon includes its own A-frame support, which
+           competed with the illusion of hanging from the photo above it — per direct
+           feedback, .swing-crop below crops that out via plain CSS (an oversized,
+           negatively-offset copy of the same unmodified asset inside a fixed, clipped
+           box; see the coordinates comment in the <style> block), keeping only the
+           person, seat, and the short stub of rope nearest the seat — not a second
+           asset, not any pixel-level editing, the exact same source PNG framed
+           differently. That stub is what visually "attaches" to the tile's bottom edge
+           once positioned there. -->
+      <div class="swing" id="heroSwing" aria-hidden="true">
+        <div class="swing-crop">
+          <Image src={manSwinging} alt="" width={512} height={512} />
+        </div>
 
-    <div class="hero-copy" id="heroCopy">
-      <!-- Same pattern as the swing's own hint above: nested inside .hero-copy so it
-           inherits hero-copy's own scroll-driven fade-in, positioned in its top-right
-           corner (inside the outline's top/right bands, not overlapping them). -->
-      <p class="konami-hint konami-hint--corner" aria-hidden="true">konami code?</p>
+        <!-- Fun easter egg, direct instruction, one of 4 identical placements on this
+             page — see the shared-base comment in global.css's .konami-hint rule and
+             src/lib/konamiHint.ts for how the hover-reveal itself works. Nested inside
+             .swing specifically so it inherits the swing's own scroll-driven opacity
+             (CSS compounds a child's opacity with its ancestors' — see global.css) —
+             it literally cannot render even translucently outside the swing's own
+             visible window, with no extra JS needed to enforce that. Positioned with
+             simple offsets relative to .swing's own (already correctly placed) box
+             rather than the frame-relative --swingTop/--swingLeft vars .swing itself
+             uses, since as a descendant it doesn't need to re-derive that position. -->
+        <p class="konami-hint konami-hint--swing" aria-hidden="true">konami code?</p>
+      </div>
 
-      <div class="hero-copy-inner" id="heroCopyInner">
-        <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
-        <p class="filler">
-          [Placeholder text] Line two of the filler bio goes here, casual in tone rather
-          than a LinkedIn headline.
-        </p>
-        <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
+      <div class="hero-copy" id="heroCopy">
+        <!-- Same pattern as the swing's own hint above: nested inside .hero-copy so it
+             inherits hero-copy's own scroll-driven fade-in, positioned in its top-right
+             corner (inside the outline's top/right bands, not overlapping them). -->
+        <p class="konami-hint konami-hint--corner" aria-hidden="true">konami code?</p>
 
-        <nav class="link-row" aria-label="Contact and profile links">
-          {
-            links.map((l) => (
-              <a href={l.href} class="link-pill">
-                {l.label}
-              </a>
-            ))
-          }
-        </nav>
+        <div class="hero-copy-inner" id="heroCopyInner">
+          <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
+          <p class="filler">
+            [Placeholder text] Line two of the filler bio goes here, casual in tone rather
+            than a LinkedIn headline.
+          </p>
+          <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
 
-        <!-- Same pattern again, in normal document flow right after the link row
-             (rather than absolutely positioned) so "right under the pills" holds
-             regardless of how many links there are or how they wrap. -->
-        <p class="konami-hint konami-hint--pills" aria-hidden="true">konami code?</p>
+          <nav class="link-row" aria-label="Contact and profile links">
+            {
+              links.map((l) => (
+                <a href={l.href} class="link-pill">
+                  {l.label}
+                </a>
+              ))
+            }
+          </nav>
+
+          <!-- Same pattern again, in normal document flow right after the link row
+               (rather than absolutely positioned) so "right under the pills" holds
+               regardless of how many links there are or how they wrap. -->
+          <p class="konami-hint konami-hint--pills" aria-hidden="true">konami code?</p>
+        </div>
       </div>
     </div>
   </div>
@@ -250,7 +269,28 @@ const TILE_CONFIGS = [
     position: sticky;
     top: 0;
     height: 70vh;
-    overflow: hidden;
+    /* Not hidden: .hero-sticky's own height is sized to the OUTLINE's real content
+       (see computeStickyHeight() in the script), which is deliberately shorter than
+       a full viewport — but .hero-stage (below) is a fixed 100vh box nested inside
+       it, needed by the MOSAIC state (progress 0) to cover the full viewport.
+       overflow:hidden here would clip that 100vh box down to hero-sticky's own
+       shorter height — this bit us for real: the mosaic was visibly cut off short
+       until this was caught and fixed. Nothing renders in .hero-stage's excess past
+       hero-sticky's own bottom edge once the tiles are in their outline positions
+       (the outline doesn't cover the full stage height), so there's nothing to leak
+       into the page past that edge in image state either. */
+    overflow: visible;
+  }
+
+  /* Fixed-100vh positioning basis for .mosaic-frame/.swing/.hero-copy — see the
+     markup comment above this element for why it exists (in short: .hero-sticky's
+     own height is no longer reliably 100vh, so something inside it has to be, for
+     everything positioned via percentages against a "full viewport" to still
+     resolve correctly). */
+  .hero-pinzone.mosaic-live .hero-stage {
+    position: relative;
+    width: 100%;
+    height: 100vh;
   }
 
   .hero-pinzone.mosaic-live .mosaic-frame {
@@ -259,8 +299,9 @@ const TILE_CONFIGS = [
     /* inset:0 alone doesn't stretch this: the fallback rule above sets an explicit
        height:280px (and width:100% + max-width:1200px) that this rule doesn't
        otherwise touch, and an explicit height wins over inset for sizing an
-       absolutely-positioned box. Overriding both explicitly is what actually makes
-       it fill .hero-sticky (100vh) edge to edge. */
+       absolutely-positioned box. height:100% now correctly resolves against
+       .hero-stage's own fixed 100vh (its nearest positioned ancestor), not against
+       .hero-sticky's shorter one. */
     width: 100%;
     height: 100%;
     display: block;
@@ -541,8 +582,10 @@ const TILE_CONFIGS = [
   // room for the swing hanging below it) and (where the text starts, plus its own
   // real rendered height, plus a little breathing room).
   function computeStickyHeight() {
-    const outlineBottomPx = (cBottom / 100) * window.innerHeight + 110;
-    const textBottomPx = (topH / 100) * window.innerHeight + heroCopyInner.offsetHeight + 80;
+    // The two trailing constants are the actual margin before the projects grid — per
+    // direct instruction, halved from their original 110/80 to roughly halve that gap.
+    const outlineBottomPx = (cBottom / 100) * window.innerHeight + 55;
+    const textBottomPx = (topH / 100) * window.innerHeight + heroCopyInner.offsetHeight + 40;
     return Math.max(outlineBottomPx, textBottomPx);
   }
 
