@@ -50,6 +50,7 @@ const SIDE_W = 14; // left/right band width
 const BOTTOM_GAP = 14;
 const SIDE_SPAN = (100 - TOP_H - BOTTOM_GAP) / 2; // height of each side-band tile (2 tiles stack per side)
 const LAST_SIDE_TILE_BOTTOM = TOP_H + SIDE_SPAN * 2; // == 100 - BOTTOM_GAP; where the swing attaches
+const SWING_LEFT = SIDE_W / 2; // horizontal midpoint of the left band, in line with tile C's own center rather than pinned to the outer edge
 
 // Mosaic layout: a hand-tiled partition of a 6-col x 4-row grid into 6 rectangles of
 // varied size (no uniform grid, no gaps/overlaps — verified by hand), unchanged from
@@ -157,7 +158,7 @@ const TILE_CONFIGS = [
   </div>
 </div>
 
-<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%`, swingTop: `${LAST_SIDE_TILE_BOTTOM}%` }}>
+<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%`, swingTop: `${LAST_SIDE_TILE_BOTTOM}%`, swingLeft: `${SWING_LEFT}%` }}>
   /* Default / fallback state: a plain static banner above the text, in normal flow,
      no JS required. This is what no-JS, reduced-motion, and mobile all get — see the
      file-level comment on why this doesn't try to approximate the outline. */
@@ -252,13 +253,16 @@ const TILE_CONFIGS = [
      frontmatter, same value that tile's own `outline.top + outline.height` resolves
      to) — the cropped rope-stub (see .swing-crop below) sits right at that seam,
      "attached" to the image above it, with the seat and figure hanging down into
-     BOTTOM_GAP's reserved open space below. Opacity set inline by the script: fades
-     in late in the pin phase (paired with the outline finishing forming) and fades
-     back out once you scroll past it. */
+     BOTTOM_GAP's reserved open space below. left is --swingLeft (SIDE_W/2, tile C's
+     own horizontal midpoint) minus half the crop's own width (14px of its 28px), so
+     the icon is actually centered on that midpoint rather than starting there — per
+     direct feedback, it was sitting right at the outer edge before. Opacity set
+     inline by the script: fades in late in the pin phase (paired with the outline
+     finishing forming) and fades back out once you scroll past it. */
   .hero-pinzone.mosaic-live .swing {
     display: block;
     position: absolute;
-    left: 1%;
+    left: calc(var(--swingLeft) - 14px);
     top: var(--swingTop);
     z-index: 3;
     opacity: 0;
@@ -317,9 +321,13 @@ const TILE_CONFIGS = [
      outline — see TOP_H/SIDE_W in the frontmatter, passed through as --topH/--sideW
      so this rect always matches the tiles' own outline positions exactly. Flex
      centers .hero-copy-inner (which keeps its own max-width/left-aligned text
-     unchanged) within that rect, both directions, rather than stretching the text
-     itself across the full open width. Opacity is set inline by the script, fading
-     in as the outline forms rather than being visible from progress 0. */
+     unchanged) horizontally within that rect, but aligns it to the top rather than
+     vertically centering — per direct feedback, centering within the full
+     top-band-to-viewport-bottom span (bottom is open, unbounded) left a large gap
+     under the top band; flex-start plus a modest top padding on .hero-copy-inner
+     (below) puts the text close under the top band instead. Opacity is set inline by
+     the script, fading in as the outline forms rather than being visible from
+     progress 0. */
   .hero-pinzone.mosaic-live .hero-copy {
     position: absolute;
     left: var(--sideW);
@@ -330,14 +338,14 @@ const TILE_CONFIGS = [
     margin: 0;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     z-index: 2;
     /* opacity set inline by the script */
   }
 
   .hero-pinzone.mosaic-live .hero-copy-inner {
     max-width: 700px;
-    padding: 0 1.5rem;
+    padding: 2.5rem 1.5rem 0;
   }
 
   h1 {

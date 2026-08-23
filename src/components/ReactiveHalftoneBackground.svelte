@@ -51,6 +51,16 @@
   const RAINBOW_SATURATION = 68; // %  — fixed across every hue, see hashHue()
   const RAINBOW_LIGHTNESS = 70; // %  — "a little lighter" than a saturated rainbow; same shade for every hue
 
+  // Text-avoidance: per direct feedback, the grown/colored grid was landing right
+  // behind readable text and making it harder to read. Rather than a z-index trick
+  // (the canvas is already behind everything — the issue is legibility, not stacking
+  // order), grid points inside a real text element's own box (plus a small buffer)
+  // are simply excluded from activation entirely, so they stay at rest regardless of
+  // how close the cursor trail gets.
+  const TEXT_ZONE_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, a, li, label';
+  const TEXT_ZONE_BUFFER = 8; // px — "a couple pixels" of clearance around each text box
+  const TEXT_ZONE_RECOMPUTE_INTERVAL = 200; // ms — text moves on scroll/resize/content changes; cheap enough to just re-measure periodically rather than wiring up scroll listeners for it
+
   // Deterministic pseudo-random hue in [0, 360) from a dot's own grid position — the
   // classic GLSL sin-hash trick. Same (x, y) always yields the same hue, which is the
   // whole point (see the file-level comment on why this isn't re-randomized per touch).
@@ -93,6 +103,32 @@
     let rafId = null;
     let lastSample = 0;
     let resizeTimer = null;
+    let textZones = [];
+    let lastZoneCompute = 0;
+
+    function computeTextZones() {
+      const els = document.querySelectorAll(TEXT_ZONE_SELECTOR);
+      const zones = [];
+      for (const el of els) {
+        if (!el.textContent || !el.textContent.trim()) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        zones.push({
+          left: r.left - TEXT_ZONE_BUFFER,
+          right: r.right + TEXT_ZONE_BUFFER,
+          top: r.top - TEXT_ZONE_BUFFER,
+          bottom: r.bottom + TEXT_ZONE_BUFFER,
+        });
+      }
+      textZones = zones;
+    }
+
+    function inTextZone(x, y) {
+      for (const z of textZones) {
+        if (x >= z.left && x <= z.right && y >= z.top && y <= z.bottom) return true;
+      }
+      return false;
+    }
 
     function resize() {
       width = window.innerWidth;
@@ -111,9 +147,14 @@
 
       trail = trail.filter((t) => now - t.time < TRAIL_LIFETIME);
 
+      if (now - lastZoneCompute > TEXT_ZONE_RECOMPUTE_INTERVAL) {
+        computeTextZones();
+        lastZoneCompute = now;
+      }
+
       for (let y = SPACING / 2; y < height; y += SPACING) {
         for (let x = SPACING / 2; x < width; x += SPACING) {
-          const activation = trail.length > 0 ? activationFrom(x, y, trail, now) : 0;
+          const activation = trail.length > 0 && !inTextZone(x, y) ? activationFrom(x, y, trail, now) : 0;
           const arm = MAX_ARM * activation; // 0 at rest — the dot only grows arms once touched
 
           let color = dotColor;
