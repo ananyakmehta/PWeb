@@ -1,18 +1,24 @@
 ---
-// Hero redesign: on load the hero is a full-viewport photo mosaic (irregular tile
-// sizes, hand-tiled to cover the screen edge-to-edge with no gaps — not a uniform
-// grid). Scrolling shrinks and "zooms out" the mosaic into a single-row rectangular
-// banner pinned near the top, at which point the pin releases and the description +
-// link row (previously paired with a headshot photo) continue below — no headshot
-// image anymore.
+// Hero redesign (direct instruction, replacing the previous "shrink into a small
+// centered banner" end state): on load the hero is a full-viewport photo mosaic
+// (irregular tile sizes, hand-tiled to cover the screen edge-to-edge with no gaps —
+// not a uniform grid), same as before. Scrolling now rearranges the same 6 tiles into
+// an OUTLINE around the hero text instead — a band across the top plus bands down the
+// left/right sides, still full-bleed edge-to-edge, deliberately leaving the bottom
+// open (no band there) and the center open for the text. The frame itself never
+// shrinks or moves off to one side; it stays full-viewport throughout — only the
+// tiles' own positions within it change, from the mosaic arrangement to the outline
+// arrangement. The hero text now lives inside that open center, fading in as the
+// outline forms rather than arriving afterward as a separate section.
 //
 // Progressive enhancement, not a single fixed implementation: the DOM/default CSS
-// renders the END state — the banner, laid out with plain flexbox, in normal document
-// flow — unconditionally. That's what a user gets with no JS, reduced motion, or a
-// narrow viewport. JS only *upgrades* it into the scroll-linked pinned mosaic when
-// motion is allowed and the viewport is wide enough (matches the same 720px breakpoint
-// used elsewhere for desktop-only effects) — it never has to invent a fallback after
-// the fact, the fallback is just what's already there before JS runs.
+// renders a plain static END state — a compact banner row above the text, in normal
+// document flow — unconditionally. That's what a user gets with no JS, reduced
+// motion, or a narrow viewport; a full-viewport scroll-pinned outline isn't something
+// a static fallback can reasonably approximate, so it deliberately falls back to the
+// simpler treatment instead. JS only *upgrades* it into the scroll-linked pinned
+// outline when motion is allowed and the viewport is wide enough (matches the same
+// 720px breakpoint used elsewhere for desktop-only effects).
 import { Image } from 'astro:assets';
 import tileA from '../assets/hero/mosaic/A.svg';
 import tileB from '../assets/hero/mosaic/B.svg';
@@ -28,23 +34,60 @@ const links = [
   { label: 'Email', href: '#' },
 ];
 
+// Outline geometry, in % of the (always full-viewport, in live mode) frame — single
+// source of truth for both the tiles' target positions below and the open center
+// rect .hero-copy is positioned into (passed to <style> via define:vars, so neither
+// copy can drift out of sync with the other).
+const TOP_H = 20; // top band height
+const SIDE_W = 14; // left/right band width
+const SIDE_SPAN = (100 - TOP_H) / 2; // height of each side-band tile (2 tiles stack per side)
+
 // Mosaic layout: a hand-tiled partition of a 6-col x 4-row grid into 6 rectangles of
-// varied size (no uniform grid, no gaps/overlaps — verified by hand). Banner layout:
-// the same 6 tiles as equal-width columns in a single row. JS interpolates each tile's
-// left/top/width/height between these two states as % of the mosaic frame's own
-// (also-interpolated) box — so as the frame itself shrinks from full-viewport down to
-// banner size, the tiles' percentage-based geometry naturally rescales with it.
+// varied size (no uniform grid, no gaps/overlaps — verified by hand), unchanged from
+// before. Outline layout: 2 tiles form the top band (split left/right halves), 2 form
+// the left band (stacked top/bottom halves), 2 form the right band (same) — deliberately
+// no bottom band, and nothing covering the center where hero-copy sits. JS interpolates
+// each tile's left/top/width/height between these two states as % of the frame's own
+// box; since the frame stays a fixed full-viewport size throughout (see .mosaic-frame
+// below), that's the only interpolation this effect needs.
 const TILE_CONFIGS = [
-  { id: 'A', src: tileA, mosaic: { left: 0, top: 0, width: 50, height: 50 } },
-  { id: 'B', src: tileB, mosaic: { left: 0, top: 50, width: 16.667, height: 50 } },
-  { id: 'C', src: tileC, mosaic: { left: 16.667, top: 50, width: 33.333, height: 50 } },
-  { id: 'D', src: tileD, mosaic: { left: 50, top: 0, width: 50, height: 25 } },
-  { id: 'E', src: tileE, mosaic: { left: 50, top: 25, width: 33.333, height: 75 } },
-  { id: 'F', src: tileF, mosaic: { left: 83.333, top: 25, width: 16.667, height: 75 } },
-].map((t, i) => ({
-  ...t,
-  banner: { left: i * 16.667, top: 0, width: 16.667, height: 100 },
-}));
+  {
+    id: 'A',
+    src: tileA,
+    mosaic: { left: 0, top: 0, width: 50, height: 50 },
+    outline: { left: 0, top: 0, width: 50, height: TOP_H },
+  },
+  {
+    id: 'B',
+    src: tileB,
+    mosaic: { left: 0, top: 50, width: 16.667, height: 50 },
+    outline: { left: 0, top: TOP_H, width: SIDE_W, height: SIDE_SPAN },
+  },
+  {
+    id: 'C',
+    src: tileC,
+    mosaic: { left: 16.667, top: 50, width: 33.333, height: 50 },
+    outline: { left: 0, top: TOP_H + SIDE_SPAN, width: SIDE_W, height: SIDE_SPAN },
+  },
+  {
+    id: 'D',
+    src: tileD,
+    mosaic: { left: 50, top: 0, width: 50, height: 25 },
+    outline: { left: 50, top: 0, width: 50, height: TOP_H },
+  },
+  {
+    id: 'E',
+    src: tileE,
+    mosaic: { left: 50, top: 25, width: 33.333, height: 75 },
+    outline: { left: 100 - SIDE_W, top: TOP_H, width: SIDE_W, height: SIDE_SPAN },
+  },
+  {
+    id: 'F',
+    src: tileF,
+    mosaic: { left: 83.333, top: 25, width: 16.667, height: 75 },
+    outline: { left: 100 - SIDE_W, top: TOP_H + SIDE_SPAN, width: SIDE_W, height: SIDE_SPAN },
+  },
+];
 ---
 
 <div class="hero-pinzone" id="heroPinzone">
@@ -56,46 +99,50 @@ const TILE_CONFIGS = [
             class="mosaic-tile"
             data-tile={t.id}
             data-mosaic={JSON.stringify(t.mosaic)}
-            data-banner={JSON.stringify(t.banner)}
+            data-outline={JSON.stringify(t.outline)}
           >
             <Image src={t.src} alt="" width={900} height={700} />
           </div>
         ))
       }
     </div>
+
+    <div class="hero-copy" id="heroCopy">
+      <div class="hero-copy-inner">
+        <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
+        <p class="filler">
+          [Placeholder text] Line two of the filler bio goes here, casual in tone rather
+          than a LinkedIn headline.
+        </p>
+        <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
+
+        <nav class="link-row" aria-label="Contact and profile links">
+          {
+            links.map((l) => (
+              <a href={l.href} class="link-pill">
+                {l.label}
+              </a>
+            ))
+          }
+        </nav>
+      </div>
+    </div>
   </div>
 </div>
 
-<section class="hero-copy">
-  <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
-  <p class="filler">
-    [Placeholder text] Line two of the filler bio goes here, casual in tone rather than
-    a LinkedIn headline.
-  </p>
-  <p class="filler">[Placeholder text] Line three wraps up the filler introduction.</p>
-
-  <nav class="link-row" aria-label="Contact and profile links">
-    {
-      links.map((l) => (
-        <a href={l.href} class="link-pill">
-          {l.label}
-        </a>
-      ))
-    }
-  </nav>
-</section>
-
-<style>
-  /* Default / fallback state: a plain static banner, in normal flow, no JS required.
-     This is what no-JS, reduced-motion, and mobile all get. */
+<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%` }}>
+  /* Default / fallback state: a plain static banner above the text, in normal flow,
+     no JS required. This is what no-JS, reduced-motion, and mobile all get — see the
+     file-level comment on why this doesn't try to approximate the outline. */
   .hero-pinzone {
     height: auto;
     /* Breakout: index.astro nests Hero inside .page-body's max-width:1200px wrapper
        (for SpaceDecor's positioning), but the mosaic needs to span the TRUE viewport
-       edge-to-edge at progress 0, not just 1200px. This standard full-bleed trick
-       extends it back to the real viewport width regardless of the ancestor's
-       constraint; .mosaic-frame's own max-width:1200px (below) still keeps the
-       fallback/end-state banner correctly centered within it. */
+       edge-to-edge, not just 1200px — the whole point of the outline is that it
+       reaches the real edges. This standard full-bleed trick extends it back to the
+       real viewport width regardless of the ancestor's constraint; .mosaic-frame's
+       own max-width:1200px (below) still keeps the fallback banner correctly
+       centered within it. */
     width: 100vw;
     margin-left: calc(50% - 50vw);
   }
@@ -129,34 +176,38 @@ const TILE_CONFIGS = [
   }
 
   /* JS-enhanced state (class added by the script below, only when motion is allowed
-     and the viewport is wide enough): tall scroll runway + sticky pin + absolute,
-     JS-controlled tile geometry. Both heights below are placeholders, immediately
-     overridden by inline styles the script sets in the same synchronous call that
-     adds this class (see STICKY_HEIGHT in the script) — the real values live there,
-     as the single source of truth, not here. Kept here only as a same-ballpark
-     fallback for the imperceptibly brief instant before that inline style lands. */
+     and the viewport is wide enough): tall scroll runway + sticky pin. Unlike the
+     previous banner version, the frame itself never resizes — it's full-viewport for
+     the entire pinned duration (see .mosaic-frame below); only the tiles inside it
+     move, from the mosaic arrangement to the outline arrangement. That also means the
+     sticky box's own height can just be 100vh again (no drift risk between a
+     JS-computed height and this CSS value like the old banner version had to manage —
+     there's nothing to compute, this box's content always fills it exactly). */
   .hero-pinzone.mosaic-live {
-    height: calc(100vh + 420px);
+    height: 200vh;
   }
 
   .hero-pinzone.mosaic-live .hero-sticky {
     position: sticky;
     top: 0;
-    height: 420px;
-    /* Not hidden: while pinned, the mosaic-frame child is absolutely positioned and
-       sized up to window.innerHeight (full-bleed at progress 0) — taller than this
-       box's own (deliberately short, see STICKY_HEIGHT) height. Visible lets it
-       paint at full size regardless; this box's own height only exists to control
-       *when* position:sticky releases, not to contain/clip its content. */
-    overflow: visible;
+    height: 100vh;
+    overflow: hidden;
   }
 
   .hero-pinzone.mosaic-live .mosaic-frame {
     position: absolute;
+    inset: 0;
+    /* inset:0 alone doesn't stretch this: the fallback rule above sets an explicit
+       height:280px (and width:100% + max-width:1200px) that this rule doesn't
+       otherwise touch, and an explicit height wins over inset for sizing an
+       absolutely-positioned box. Overriding both explicitly is what actually makes
+       it fill .hero-sticky (100vh) edge to edge. */
+    width: 100%;
+    height: 100%;
     display: block;
     max-width: none;
     margin: 0;
-    /* top/left/width/height/border-radius set inline by the script, every frame */
+    border-radius: 0;
   }
 
   .hero-pinzone.mosaic-live .mosaic-tile {
@@ -167,7 +218,37 @@ const TILE_CONFIGS = [
   .hero-copy {
     max-width: 700px;
     margin: 0 auto;
+  }
+
+  .hero-copy-inner {
     padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* Live mode: hero-copy becomes the absolutely-positioned open center of the
+     outline — see TOP_H/SIDE_W in the frontmatter, passed through as --topH/--sideW
+     so this rect always matches the tiles' own outline positions exactly. Flex
+     centers .hero-copy-inner (which keeps its own max-width/left-aligned text
+     unchanged) within that rect, both directions, rather than stretching the text
+     itself across the full open width. Opacity is set inline by the script, fading
+     in as the outline forms rather than being visible from progress 0. */
+  .hero-pinzone.mosaic-live .hero-copy {
+    position: absolute;
+    left: var(--sideW);
+    right: var(--sideW);
+    top: var(--topH);
+    bottom: 0;
+    max-width: none;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    /* opacity set inline by the script */
+  }
+
+  .hero-pinzone.mosaic-live .hero-copy-inner {
+    max-width: 700px;
+    padding: 0 1.5rem;
   }
 
   h1 {
@@ -208,41 +289,30 @@ const TILE_CONFIGS = [
 </style>
 
 <script>
-  // Progressive-enhancement gate: only switch into the scroll-linked pin/mosaic mode
+  // Progressive-enhancement gate: only switch into the scroll-linked pin/outline mode
   // when motion is allowed AND the viewport is wide enough (matches the 720px
   // breakpoint used elsewhere for desktop-only effects — position:sticky + dynamic
   // viewport-height math is exactly the kind of thing that gets unreliable on mobile
   // Safari's address-bar-driven 100vh changes, so it isn't worth chasing there).
   const pinzone = document.getElementById('heroPinzone');
   const frame = document.getElementById('mosaicFrame');
-  const sticky = pinzone?.querySelector('.hero-sticky');
-  if (!pinzone || !frame || !sticky) throw new Error('Hero mosaic: expected elements not found');
+  const heroCopy = document.getElementById('heroCopy');
+  if (!pinzone || !frame || !heroCopy) throw new Error('Hero mosaic: expected elements not found');
 
   const tiles = Array.from(frame.querySelectorAll('.mosaic-tile'));
   const tileData = tiles.map((el) => ({
     el,
     mosaic: JSON.parse(el.dataset.mosaic ?? '{}'),
-    banner: JSON.parse(el.dataset.banner ?? '{}'),
+    outline: JSON.parse(el.dataset.outline ?? '{}'),
   }));
 
   const motionOk = () => !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const widthOk = () => window.innerWidth > 720;
 
-  // Banner geometry, hoisted so both update() (tile positions) and syncMode() (the
-  // sticky box's own height) read the same numbers — no separate copy to drift out
-  // of sync. STICKY_HEIGHT is deliberately just the banner's own footprint (plus a
-  // little buffer for a non-abrupt hand-off), not a full 100vh: .hero-sticky's own
-  // height is what CSS position:sticky uses to decide when to release, and making it
-  // match the banner's real size (rather than the full viewport) is what keeps the
-  // "banner scrolls away → hero-copy arrives" hand-off tight instead of leaving a
-  // long stretch of empty scroll between them (the banner sits near the *top* of the
-  // sticky box; a full-viewport-tall box meant a lot of scroll after the banner
-  // itself had already scrolled out before the box "ran out" and released).
-  const NAV_HEIGHT = 64;
-  const BANNER_HEIGHT = 280;
-  const BANNER_TOP = NAV_HEIGHT + 32;
-  const EXIT_BUFFER = 40;
-  const STICKY_HEIGHT = BANNER_TOP + BANNER_HEIGHT + EXIT_BUFFER;
+  // Hero-copy stays fully transparent until the outline is a good way through
+  // forming, then fades in over the rest of the scroll — text appearing over a
+  // still-mostly-closed mosaic would just look like it's popping in over a photo.
+  const TEXT_FADE_START = 0.3;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -254,26 +324,20 @@ const TILE_CONFIGS = [
 
   function update() {
     const rect = pinzone.getBoundingClientRect();
-    const scrollableHeight = pinzone.offsetHeight - STICKY_HEIGHT;
+    const scrollableHeight = pinzone.offsetHeight - window.innerHeight;
     const raw = scrollableHeight > 0 ? -rect.top / scrollableHeight : 1;
     const progress = Math.min(1, Math.max(0, raw));
     const eased = easeInOutCubic(progress);
 
-    const bannerMaxWidth = Math.min(1200, window.innerWidth - 48);
-    const bannerLeft = (window.innerWidth - bannerMaxWidth) / 2;
-
-    frame.style.top = `${lerp(0, BANNER_TOP, eased)}px`;
-    frame.style.left = `${lerp(0, bannerLeft, eased)}px`;
-    frame.style.width = `${lerp(window.innerWidth, bannerMaxWidth, eased)}px`;
-    frame.style.height = `${lerp(window.innerHeight, BANNER_HEIGHT, eased)}px`;
-    frame.style.borderRadius = `${lerp(0, 16, eased)}px`;
-
     for (const t of tileData) {
-      t.el.style.left = `${lerp(t.mosaic.left, t.banner.left, eased)}%`;
-      t.el.style.top = `${lerp(t.mosaic.top, t.banner.top, eased)}%`;
-      t.el.style.width = `${lerp(t.mosaic.width, t.banner.width, eased)}%`;
-      t.el.style.height = `${lerp(t.mosaic.height, t.banner.height, eased)}%`;
+      t.el.style.left = `${lerp(t.mosaic.left, t.outline.left, eased)}%`;
+      t.el.style.top = `${lerp(t.mosaic.top, t.outline.top, eased)}%`;
+      t.el.style.width = `${lerp(t.mosaic.width, t.outline.width, eased)}%`;
+      t.el.style.height = `${lerp(t.mosaic.height, t.outline.height, eased)}%`;
     }
+
+    const textOpacity = Math.max(0, Math.min(1, (progress - TEXT_FADE_START) / (1 - TEXT_FADE_START)));
+    heroCopy.style.opacity = textOpacity.toFixed(2);
   }
 
   let liveMode = false;
@@ -296,19 +360,13 @@ const TILE_CONFIGS = [
 
     if (liveMode) {
       pinzone.classList.add('mosaic-live');
-      // Single source of truth for both heights — see STICKY_HEIGHT above. Set here,
-      // synchronously before the first paint of this state, so the CSS class's own
-      // placeholder values are never actually visible.
-      pinzone.style.height = `calc(100vh + ${STICKY_HEIGHT}px)`;
-      sticky.style.height = `${STICKY_HEIGHT}px`;
       window.addEventListener('scroll', onScroll, { passive: true });
       update();
     } else {
       pinzone.classList.remove('mosaic-live');
-      pinzone.style.removeProperty('height');
-      sticky.style.removeProperty('height');
       window.removeEventListener('scroll', onScroll);
       frame.removeAttribute('style');
+      heroCopy.removeAttribute('style');
       for (const t of tileData) t.el.removeAttribute('style');
     }
   }
