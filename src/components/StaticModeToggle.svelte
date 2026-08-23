@@ -41,7 +41,10 @@
   aria-label="Static mode"
   onclick={toggle}
 >
-  <span class="label">static mode</span>
+  <span class="label-group">
+    <span class="label">static mode</span>
+    <span class="sublabel">(disables rainbow grid)</span>
+  </span>
   <span class="switch-track" class:on={enabled}>
     <span class="thumb" class:on={enabled}></span>
   </span>
@@ -64,7 +67,11 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem;
+    /* A few px taller than a single-line label strictly needs, per direct
+       instruction — now that .label-group is two lines (the new sub-label below),
+       the extra vertical padding keeps both lines and the switch from reading as
+       crowded. */
+    padding: 0.7rem 0.5rem;
     margin: 0;
     border: none;
     border-radius: 999px;
@@ -79,12 +86,25 @@
     background: rgba(255, 255, 255, 0.06);
   }
 
+  .label-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    user-select: none;
+  }
+
   .label {
     font-size: 0.65rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--page-text-dim);
-    user-select: none;
+  }
+
+  .sublabel {
+    font-size: 0.58rem;
+    letter-spacing: 0.02em;
+    color: var(--page-text-dim);
+    opacity: 0.65;
   }
 
   .switch-track {
@@ -124,7 +144,7 @@
       right: 0.25rem;
     }
 
-    .label {
+    .label-group {
       display: none;
     }
   }
