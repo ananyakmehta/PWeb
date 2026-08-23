@@ -1,12 +1,13 @@
 ---
 // DD_v2.1.md §2.2 (carried from v2, unchanged): single shared layout wrapping every
-// page, so background, nav, and cursor persist across navigation. §5.1: the
-// constellation starfield is fully replaced by the reactive halftone background.
+// page, so background and nav persist across navigation. §5.1: the constellation
+// starfield is fully replaced by the reactive halftone background. The custom "ship
+// of the imagination" cursor (previously CursorSystem.svelte here) was removed per
+// direct instruction — plain native cursor sitewide now.
 // Display font (Raleway, swapped from Arvo per direct instruction) loaded here for the
 // whole site's headings/nav.
 import '../styles/global.css';
 import ReactiveHalftoneBackground from '../components/ReactiveHalftoneBackground.svelte';
-import CursorSystem from '../components/CursorSystem.svelte';
 import KonamiEasterEgg from '../components/KonamiEasterEgg.svelte';
 import StaticModeToggle from '../components/StaticModeToggle.svelte';
 import Nav from '../components/Nav.astro';
@@ -33,7 +34,6 @@ const { title } = Astro.props;
   </head>
   <body>
     <ReactiveHalftoneBackground client:load />
-    <CursorSystem client:load />
     <KonamiEasterEgg client:load />
     <StaticModeToggle client:load />
     <div class="page-content">

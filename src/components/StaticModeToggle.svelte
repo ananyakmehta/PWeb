@@ -11,6 +11,13 @@
   // width. Initial render defaults to "off" (matches the default in
   // staticMode.ts) since localStorage isn't available at build/SSR time; onMount
   // immediately corrects it to whatever was actually last chosen.
+  //
+  // The whole control (label text + switch pill) is ONE <button>, not a small
+  // switch with an inert label next to it — per direct feedback, only the tiny
+  // pill itself used to be clickable, which read as an annoyingly small target.
+  // Padding on the button (compensated by pulling bottom/right in by the same
+  // amount) grows the actual hit area further still without moving the visible
+  // switch's own on-screen position.
   import { onMount } from 'svelte';
   import { getStaticModeEnabled, setStaticModeEnabled } from '../lib/staticMode';
 
@@ -26,19 +33,19 @@
   }
 </script>
 
-<div class="static-mode-toggle">
-  <span class="label" id="staticModeLabel">static mode</span>
-  <button
-    type="button"
-    class="switch"
-    role="switch"
-    aria-checked={enabled}
-    aria-labelledby="staticModeLabel"
-    onclick={toggle}
-  >
+<button
+  type="button"
+  class="static-mode-toggle"
+  role="switch"
+  aria-checked={enabled}
+  aria-label="Static mode"
+  onclick={toggle}
+>
+  <span class="label">static mode</span>
+  <span class="switch-track" class:on={enabled}>
     <span class="thumb" class:on={enabled}></span>
-  </button>
-</div>
+  </span>
+</button>
 
 <style>
   .static-mode-toggle {
@@ -46,14 +53,30 @@
        scroll position. Bottom-right per direct instruction; z-index keeps it above
        ordinary page content (the halftone canvas is z-index:0, page content is
        z-index:1) without needing to dodge anything the way the top corner did
-       with Nav.astro's own icon row. */
+       with Nav.astro's own icon row. padding+the smaller bottom/right offset
+       together enlarge the clickable box while keeping the visible switch pill at
+       the exact same on-screen spot as a bare 1.5rem/1.5rem inset with no padding
+       would have put it. */
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    bottom: 1rem;
+    right: 1rem;
     z-index: 50;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    padding: 0.5rem;
+    margin: 0;
+    border: none;
+    border-radius: 999px;
+    background: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 150ms ease;
+  }
+
+  .static-mode-toggle:hover,
+  .static-mode-toggle:focus-visible {
+    background: rgba(255, 255, 255, 0.06);
   }
 
   .label {
@@ -64,19 +87,18 @@
     user-select: none;
   }
 
-  .switch {
+  .switch-track {
     position: relative;
     width: 30px;
     height: 17px;
-    padding: 0;
+    flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 999px;
     background: rgba(255, 255, 255, 0.06);
-    cursor: pointer;
     transition: background 150ms ease, border-color 150ms ease;
   }
 
-  .switch[aria-checked='true'] {
+  .switch-track.on {
     background: var(--accent);
     border-color: var(--accent);
   }
@@ -98,8 +120,8 @@
 
   @media (max-width: 640px) {
     .static-mode-toggle {
-      bottom: 0.75rem;
-      right: 0.75rem;
+      bottom: 0.25rem;
+      right: 0.25rem;
     }
 
     .label {
