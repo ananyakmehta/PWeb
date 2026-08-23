@@ -319,15 +319,19 @@ const TILE_CONFIGS = [
 
   /* Live mode: hero-copy becomes the absolutely-positioned open center of the
      outline — see TOP_H/SIDE_W in the frontmatter, passed through as --topH/--sideW
-     so this rect always matches the tiles' own outline positions exactly. Flex
-     centers .hero-copy-inner (which keeps its own max-width/left-aligned text
-     unchanged) horizontally within that rect, but aligns it to the top rather than
-     vertically centering — per direct feedback, centering within the full
-     top-band-to-viewport-bottom span (bottom is open, unbounded) left a large gap
-     under the top band; flex-start plus a modest top padding on .hero-copy-inner
-     (below) puts the text close under the top band instead. Opacity is set inline by
-     the script, fading in as the outline forms rather than being visible from
-     progress 0. */
+     so this rect always matches the tiles' own outline positions exactly.
+     .hero-copy is a row-direction flex container (the default), so align-items is
+     the CROSS axis (vertical) and justify-content is the MAIN axis (horizontal) —
+     flex-start on both packs .hero-copy-inner into the top-left corner of the open
+     rect instead of centering it in the (tall, and on the right, wide-open) box.
+     Earlier this had align-items:center + justify-content:flex-start, which — for a
+     row container — actually left the vertical centering fully in place (wrong axis)
+     while only changing horizontal packing; that's why the top gap stayed big even
+     after that "fix." .hero-copy-inner's own top padding (below) sets how far under
+     the top band the text actually sits; its max-width controls how far right it
+     reaches before the right-side gap (bumped up so it doesn't read as a big empty
+     margin on that side). Opacity is set inline by the script, fading in as the
+     outline forms rather than being visible from progress 0. */
   .hero-pinzone.mosaic-live .hero-copy {
     position: absolute;
     left: var(--sideW);
@@ -337,14 +341,14 @@ const TILE_CONFIGS = [
     max-width: none;
     margin: 0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: flex-start;
     z-index: 2;
     /* opacity set inline by the script */
   }
 
   .hero-pinzone.mosaic-live .hero-copy-inner {
-    max-width: 700px;
+    max-width: 900px;
     padding: 2.5rem 1.5rem 0;
   }
 
