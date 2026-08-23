@@ -7,6 +7,7 @@
 import '../styles/global.css';
 import ReactiveHalftoneBackground from '../components/ReactiveHalftoneBackground.svelte';
 import CursorSystem from '../components/CursorSystem.svelte';
+import KonamiEasterEgg from '../components/KonamiEasterEgg.svelte';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 
@@ -32,6 +33,7 @@ const { title } = Astro.props;
   <body>
     <ReactiveHalftoneBackground client:load />
     <CursorSystem client:load />
+    <KonamiEasterEgg client:load />
     <div class="page-content">
       <Nav />
       <slot />
