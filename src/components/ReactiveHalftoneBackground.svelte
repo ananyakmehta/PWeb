@@ -23,7 +23,7 @@
 
   const SPACING = 22;
   const BASE_RADIUS = 1.0; // smaller than the v1 CAD-car version (was 1.4), per spec
-  const MAX_BOOST = 1.0; // smaller ripple growth too — subtle texture, not a bold pattern
+  const MAX_BOOST = 3.0; // touched-dot radius = BASE_RADIUS + MAX_BOOST = 4.0, double the previous 2.0 max, per direct instruction
   const WAVE_SPEED = 340; // px/sec
   const RIPPLE_LIFETIME = 900; // ms
   const WAVE_WIDTH = 46; // px

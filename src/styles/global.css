@@ -1,8 +1,9 @@
 /*
  * DD_v2.1.md §5.1/§5.4 — site-wide palette (open item, proposed here — NOT locked).
  *
- * --page-bg: RGB(5, 60, 87) per direct instruction — a richer, more saturated blue
- * than the previous near-black navy. --halftone-dot is the *rest* (untouched) dot
+ * --page-bg: #101740 per direct instruction (previously RGB(5, 60, 87), also a direct
+ * instruction — this palette has been iterated live, not derived from the doc).
+ * --halftone-dot is the *rest* (untouched) dot
  * color, also per direct instruction: a pale, translucent near-white blue rather than
  * a solid opaque tone, so it reads as a soft glow rather than a hard dot against the
  * richer background — the alpha channel does real compositing work here (canvas
@@ -29,7 +30,7 @@
  * to change.
  */
 :root {
-  --page-bg: #053c57;
+  --page-bg: #101740;
   --page-text: #e8e8ee;
   --page-text-dim: #9a9aa6;
 
