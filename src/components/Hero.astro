@@ -26,7 +26,7 @@ import tileC from '../assets/hero/mosaic/C.svg';
 import tileD from '../assets/hero/mosaic/D.svg';
 import tileE from '../assets/hero/mosaic/E.svg';
 import tileF from '../assets/hero/mosaic/F.svg';
-import childOnSwing from '../assets/decor/child-on-swing.png';
+import manSwinging from '../assets/decor/man-swinging.png';
 
 const links = [
   { label: 'GitHub', href: '#' },
@@ -41,7 +41,15 @@ const links = [
 // copy can drift out of sync with the other).
 const TOP_H = 20; // top band height
 const SIDE_W = 14; // left/right band width
-const SIDE_SPAN = (100 - TOP_H) / 2; // height of each side-band tile (2 tiles stack per side)
+// The side bands stop BOTTOM_GAP short of the true bottom edge (rather than reaching
+// all the way to 100%, like the top band and the sides' own outer edge do) — that gap
+// is deliberate open space for the swing (below) to hang in. Without it, "attach to
+// the bottom edge of the last image" would mean attaching at the *viewport's* own
+// bottom edge, i.e. the swing would hang entirely off-screen with nothing below it to
+// hang into — this pulls the last tile on each side back just enough to leave room.
+const BOTTOM_GAP = 14;
+const SIDE_SPAN = (100 - TOP_H - BOTTOM_GAP) / 2; // height of each side-band tile (2 tiles stack per side)
+const LAST_SIDE_TILE_BOTTOM = TOP_H + SIDE_SPAN * 2; // == 100 - BOTTOM_GAP; where the swing attaches
 
 // Mosaic layout: a hand-tiled partition of a 6-col x 4-row grid into 6 rectangles of
 // varied size (no uniform grid, no gaps/overlaps — verified by hand), unchanged from
@@ -108,15 +116,15 @@ const TILE_CONFIGS = [
       }
     </div>
 
-    <!-- Real, sourced icon — not hand-drawn — per direct instruction. "child on swing"
-         by Maxim Kulikov, Noun Project, CC BY 3.0 (credited in Footer.astro). Includes
-         its own ropes/seat, so it's a single self-contained decoration, not composited
-         from separate pieces like the earlier astronaut+flag was. Black-line-on
-         -transparent PNG (Noun Project gates SVG behind a paid API, same situation as
-         the icon it's replacing), tinted white via CSS filter to read against the dark
-         open background it mostly sits over. -->
+    <!-- Real, sourced icon — not hand-drawn — per direct instruction: an adult figure
+         (not a child), as minimalist as possible — a flat solid silhouette, not
+         line-art. "Man Swinging" by Gan Khoon Lay, Noun Project, CC BY 3.0 (credited
+         in Footer.astro). Includes its own A-frame/ropes/seat, so it's a single
+         self-contained decoration, not composited from separate pieces. Black-on
+         -transparent PNG (Noun Project gates SVG behind a paid API), tinted white via
+         CSS filter to read against the dark open background it mostly sits over. -->
     <div class="swing" id="heroSwing" aria-hidden="true">
-      <Image src={childOnSwing} alt="" width={200} height={200} />
+      <Image src={manSwinging} alt="" width={200} height={200} />
     </div>
 
     <div class="hero-copy" id="heroCopy">
@@ -142,7 +150,7 @@ const TILE_CONFIGS = [
   </div>
 </div>
 
-<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%` }}>
+<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%`, swingTop: `${LAST_SIDE_TILE_BOTTOM}%` }}>
   /* Default / fallback state: a plain static banner above the text, in normal flow,
      no JS required. This is what no-JS, reduced-motion, and mobile all get — see the
      file-level comment on why this doesn't try to approximate the outline. */
@@ -232,19 +240,20 @@ const TILE_CONFIGS = [
     display: none;
   }
 
-  /* Live mode: positioned hanging from the lower portion of the last (bottom-most)
-     left-side outline tile — see TILE_CONFIGS' tile C, which spans the left band's
-     lower half down to the very bottom edge. Anchored partway down that tile rather
-     than exactly at its bottom edge (which is the true viewport edge, y:100%) so the
-     character has room to hang below the rope tops and still stay fully on-screen.
-     Opacity set inline by the script: fades in late in the pin phase (paired with the
-     outline finishing forming) and fades back out once you scroll past it. */
+  /* Live mode: top edge pinned to --swingTop, which is exactly the last (bottom-most)
+     left-side outline tile's own bottom edge (LAST_SIDE_TILE_BOTTOM in the
+     frontmatter, same value that tile's own `outline.top + outline.height` resolves
+     to) — the swing's A-frame top sits right at that seam, "attached" to the image
+     above it, with the whole rest of the icon (frame legs, ropes, seat, figure)
+     hanging down into BOTTOM_GAP's reserved open space below. Opacity set inline by
+     the script: fades in late in the pin phase (paired with the outline finishing
+     forming) and fades back out once you scroll past it. */
   .hero-pinzone.mosaic-live .swing {
     display: block;
     position: absolute;
-    left: 4%;
-    top: 76%;
-    width: 130px;
+    left: 1%;
+    top: var(--swingTop);
+    width: 110px;
     z-index: 3;
     opacity: 0;
     pointer-events: none;
