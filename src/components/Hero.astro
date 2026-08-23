@@ -39,63 +39,71 @@ const links = [
 // source of truth for both the tiles' target positions below and the open center
 // rect .hero-copy is positioned into (passed to <style> via define:vars, so neither
 // copy can drift out of sync with the other).
-const TOP_H = 20; // top band height
-const SIDE_W = 14; // left/right band width
-// The side bands stop BOTTOM_GAP short of the true bottom edge (rather than reaching
-// all the way to 100%, like the top band and the sides' own outer edge do) — that gap
-// is deliberate open space for the swing (below) to hang in. Without it, "attach to
-// the bottom edge of the last image" would mean attaching at the *viewport's* own
-// bottom edge, i.e. the swing would hang entirely off-screen with nothing below it to
-// hang into — this pulls the last tile on each side back just enough to leave room.
-const BOTTOM_GAP = 14;
-const SIDE_SPAN = (100 - TOP_H - BOTTOM_GAP) / 2; // height of each side-band tile (2 tiles stack per side)
-const LAST_SIDE_TILE_BOTTOM = TOP_H + SIDE_SPAN * 2; // == 100 - BOTTOM_GAP; where the swing attaches
-const SWING_LEFT = SIDE_W / 2; // horizontal midpoint of the left band, in line with tile C's own center rather than pinned to the outer edge
+const TOP_H = 20; // top row height — shared by A, D, and the two corner tiles (B, E)
+const SIDE_W = 14; // width of the two corner tiles (B, E) and the two tiles below them
+// (C, F) — same width top to bottom so each side reads as one continuous vertical
+// strip, corner tile flush above the side tile.
+//
+// Per direct feedback: the outline previously had B/E as a second side-band tile
+// stacked below A/D, with C/F below THAT — reaching much further down the sides than
+// the hero text itself did, which read a bit odd (a long stretch of border running
+// well past where the text ends). Restructured so B/E move UP into the top-left/
+// top-right corners instead (freeing A/D to shrink and stop reaching the outer edges,
+// since B/E now claim SIDE_W on each end of the top row), and C/F simply move into
+// the slot B/E used to occupy — same width, same height, just one tile instead of two
+// stacked in that column. That's what makes the outline shorter overall: nothing
+// reaches past C_BOTTOM on the sides anymore, and C_BOTTOM is deliberately the same
+// value the old B/E tiles' own bottom edge used to be at, not a fresh calculation.
+const SIDE_TILE_HEIGHT = 33;
+const CENTER_TOP_W = (100 - SIDE_W * 2) / 2; // A/D's new (narrower) width, splitting whatever's left of the top row after the two corner tiles claim SIDE_W on each end
+const C_BOTTOM = TOP_H + SIDE_TILE_HEIGHT; // where C's bottom edge is now — also where the swing/hint attach (see --swingTop below), unchanged in *effect*: they move up together with C, per direct instruction
+const SWING_LEFT = SIDE_W / 2; // horizontal midpoint of the left column, in line with tile C's own center rather than pinned to the outer edge
 
 // Mosaic layout: a hand-tiled partition of a 6-col x 4-row grid into 6 rectangles of
 // varied size (no uniform grid, no gaps/overlaps — verified by hand), unchanged from
-// before. Outline layout: 2 tiles form the top band (split left/right halves), 2 form
-// the left band (stacked top/bottom halves), 2 form the right band (same) — deliberately
-// no bottom band, and nothing covering the center where hero-copy sits. JS interpolates
-// each tile's left/top/width/height between these two states as % of the frame's own
-// box; since the frame stays a fixed full-viewport size throughout (see .mosaic-frame
-// below), that's the only interpolation this effect needs.
+// before. Outline layout: see the geometry comment above — B and E are now corner
+// tiles in the top row alongside the (narrower) A and D, and C/F are single tiles
+// occupying only the upper portion of each side column, nothing covering the center
+// where hero-copy sits and nothing reaching the bottom on the sides at all anymore.
+// JS interpolates each tile's left/top/width/height between these two states as % of
+// the frame's own box; since the frame stays a fixed full-viewport size throughout
+// (see .mosaic-frame below), that's the only interpolation this effect needs.
 const TILE_CONFIGS = [
   {
     id: 'A',
     src: tileA,
     mosaic: { left: 0, top: 0, width: 50, height: 50 },
-    outline: { left: 0, top: 0, width: 50, height: TOP_H },
+    outline: { left: SIDE_W, top: 0, width: CENTER_TOP_W, height: TOP_H },
   },
   {
     id: 'B',
     src: tileB,
     mosaic: { left: 0, top: 50, width: 16.667, height: 50 },
-    outline: { left: 0, top: TOP_H, width: SIDE_W, height: SIDE_SPAN },
+    outline: { left: 0, top: 0, width: SIDE_W, height: TOP_H },
   },
   {
     id: 'C',
     src: tileC,
     mosaic: { left: 16.667, top: 50, width: 33.333, height: 50 },
-    outline: { left: 0, top: TOP_H + SIDE_SPAN, width: SIDE_W, height: SIDE_SPAN },
+    outline: { left: 0, top: TOP_H, width: SIDE_W, height: SIDE_TILE_HEIGHT },
   },
   {
     id: 'D',
     src: tileD,
     mosaic: { left: 50, top: 0, width: 50, height: 25 },
-    outline: { left: 50, top: 0, width: 50, height: TOP_H },
+    outline: { left: SIDE_W + CENTER_TOP_W, top: 0, width: CENTER_TOP_W, height: TOP_H },
   },
   {
     id: 'E',
     src: tileE,
     mosaic: { left: 50, top: 25, width: 33.333, height: 75 },
-    outline: { left: 100 - SIDE_W, top: TOP_H, width: SIDE_W, height: SIDE_SPAN },
+    outline: { left: 100 - SIDE_W, top: 0, width: SIDE_W, height: TOP_H },
   },
   {
     id: 'F',
     src: tileF,
     mosaic: { left: 83.333, top: 25, width: 16.667, height: 75 },
-    outline: { left: 100 - SIDE_W, top: TOP_H + SIDE_SPAN, width: SIDE_W, height: SIDE_SPAN },
+    outline: { left: 100 - SIDE_W, top: TOP_H, width: SIDE_W, height: SIDE_TILE_HEIGHT },
   },
 ];
 ---
@@ -180,7 +188,7 @@ const TILE_CONFIGS = [
   </div>
 </div>
 
-<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%`, swingTop: `${LAST_SIDE_TILE_BOTTOM}%`, swingLeft: `${SWING_LEFT}%` }}>
+<style define:vars={{ topH: `${TOP_H}%`, sideW: `${SIDE_W}%`, swingTop: `${C_BOTTOM}%`, swingLeft: `${SWING_LEFT}%` }}>
   /* Default / fallback state: a plain static banner above the text, in normal flow,
      no JS required. This is what no-JS, reduced-motion, and mobile all get — see the
      file-level comment on why this doesn't try to approximate the outline. */
@@ -270,17 +278,19 @@ const TILE_CONFIGS = [
     display: none;
   }
 
-  /* Live mode: top edge pinned to --swingTop, which is exactly the last (bottom-most)
-     left-side outline tile's own bottom edge (LAST_SIDE_TILE_BOTTOM in the
-     frontmatter, same value that tile's own `outline.top + outline.height` resolves
-     to) — the cropped rope-stub (see .swing-crop below) sits right at that seam,
-     "attached" to the image above it, with the seat and figure hanging down into
-     BOTTOM_GAP's reserved open space below. left is --swingLeft (SIDE_W/2, tile C's
-     own horizontal midpoint) minus half the crop's own width (14px of its 28px), so
-     the icon is actually centered on that midpoint rather than starting there — per
-     direct feedback, it was sitting right at the outer edge before. Opacity set
-     inline by the script: fades in late in the pin phase (paired with the outline
-     finishing forming) and fades back out once you scroll past it. */
+  /* Live mode: top edge pinned to --swingTop, which is exactly tile C's own bottom
+     edge (C_BOTTOM in the frontmatter, same value that tile's own `outline.top +
+     outline.height` resolves to) — moves up automatically whenever C's own geometry
+     changes, per direct instruction that this should "move up with it." The cropped
+     rope-stub (see .swing-crop below) sits right at that seam, "attached" to the
+     image above it, with the seat and figure hanging down into the open space below
+     (C no longer reaches anywhere near the viewport's own bottom edge, so there's
+     always plenty of room here regardless of viewport height). left is --swingLeft
+     (SIDE_W/2, tile C's own horizontal midpoint) minus half the crop's own width
+     (14px of its 28px), so the icon is actually centered on that midpoint rather than
+     starting there. Opacity set inline by the script: fades in late in the pin phase
+     (paired with the outline finishing forming) and fades back out once you scroll
+     past it. */
   .hero-pinzone.mosaic-live .swing {
     display: block;
     position: absolute;
