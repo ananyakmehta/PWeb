@@ -133,20 +133,26 @@ const TILE_CONFIGS = [
       <div class="swing-crop">
         <Image src={manSwinging} alt="" width={512} height={512} />
       </div>
+
+      <!-- Fun easter egg, direct instruction, one of 4 identical placements on this
+           page — see the shared-base comment in global.css's .konami-hint rule and
+           src/lib/konamiHint.ts for how the hover-reveal itself works. Nested inside
+           .swing specifically so it inherits the swing's own scroll-driven opacity
+           (CSS compounds a child's opacity with its ancestors' — see global.css) —
+           it literally cannot render even translucently outside the swing's own
+           visible window, with no extra JS needed to enforce that. Positioned with
+           simple offsets relative to .swing's own (already correctly placed) box
+           rather than the frame-relative --swingTop/--swingLeft vars .swing itself
+           uses, since as a descendant it doesn't need to re-derive that position. -->
+      <p class="konami-hint konami-hint--swing" aria-hidden="true">konami code?</p>
     </div>
 
-    <!-- Fun easter egg, direct instruction: completely invisible at rest (opacity:0,
-         not display:none — it needs real layout dimensions for the proximity check
-         below to measure, and this also registers it as a text zone the halftone
-         background's reveal grid avoids growing/coloring through once it IS visible,
-         same as any other real text on the page — see ReactiveHalftoneBackground's
-         TEXT_ZONE_SELECTOR), fading up to a translucent max as the cursor gets close
-         (handleHintHover in the script below) — the actual Konami-code listener lives
-         site-wide in KonamiEasterEgg.svelte (Layout.astro), not here; this is just the
-         hint pointing at it. -->
-    <p class="konami-hint" id="konamiHint" aria-hidden="true">konami code?</p>
-
     <div class="hero-copy" id="heroCopy">
+      <!-- Same pattern as the swing's own hint above: nested inside .hero-copy so it
+           inherits hero-copy's own scroll-driven fade-in, positioned in its top-right
+           corner (inside the outline's top/right bands, not overlapping them). -->
+      <p class="konami-hint konami-hint--corner" aria-hidden="true">konami code?</p>
+
       <div class="hero-copy-inner">
         <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
         <p class="filler">
@@ -164,6 +170,11 @@ const TILE_CONFIGS = [
             ))
           }
         </nav>
+
+        <!-- Same pattern again, in normal document flow right after the link row
+             (rather than absolutely positioned) so "right under the pills" holds
+             regardless of how many links there are or how they wrap. -->
+        <p class="konami-hint konami-hint--pills" aria-hidden="true">konami code?</p>
       </div>
     </div>
   </div>
@@ -319,35 +330,56 @@ const TILE_CONFIGS = [
     filter: brightness(0) invert(1);
   }
 
-  /* Not shown outside live mode, same reasoning as .swing above. */
+  /* Shared sizing/layout for every .konami-hint instance on this page — rest-state
+     opacity/color/pointer-events come from the global base rule (global.css); this
+     component only adds what differs per instance below. .konami-hint--corner and
+     --pills default to display:none outside live mode since their ancestor
+     (.hero-copy) doesn't itself toggle display the way .swing does — .swing's own
+     display:none already hides --swing's nested copy for free, so it doesn't need a
+     rule here. */
   .konami-hint {
+    text-align: center;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    z-index: 3;
+  }
+
+  .konami-hint--corner,
+  .konami-hint--pills {
     display: none;
   }
 
-  /* Live mode: centered under the swing (--swingLeft, minus half this box's own
-     50px width, so the CENTER lines up rather than the left edge), a small gap below
-     it (33px swing height + a few px). Truly invisible at rest (opacity:0, not
-     display:none — see the markup comment for why); opacity is driven entirely by
-     handleHintHover() in the script, proximity-based, reaching fully opaque white at
-     close range — per direct feedback, the original dim/translucent-capped version
-     was hard to read once revealed. pointer-events:none because detection is a
-     distance check against getBoundingClientRect() in JS, not real :hover — this
-     never needs to receive pointer events itself, and staying out of the way means it
-     can never block a click on anything near it. */
-  .hero-pinzone.mosaic-live .konami-hint {
+  /* Centered under the swing: left:50%/translateX(-50%) centers this 100px-wide box
+     on .swing's own horizontal center (a simple relative offset, since .swing is
+     already positioned exactly where it needs to be via --swingLeft/--swingTop — as
+     its descendant, this doesn't need to re-derive that); top:38px clears the 33px
+     swing height plus a small gap. */
+  .hero-pinzone.mosaic-live .konami-hint--swing {
     display: block;
     position: absolute;
-    left: calc(var(--swingLeft) - 50px);
-    top: calc(var(--swingTop) + 38px);
+    left: 50%;
+    top: 38px;
     width: 100px;
     margin: 0;
-    text-align: center;
-    font-size: 0.7rem;
-    color: #ffffff;
-    white-space: nowrap;
-    z-index: 3;
-    opacity: 0;
-    pointer-events: none;
+    transform: translateX(-50%);
+  }
+
+  /* Top-right corner of the open center, inside the top/right outline bands rather
+     than overlapping them. */
+  .hero-pinzone.mosaic-live .konami-hint--corner {
+    display: block;
+    position: absolute;
+    top: 0.5rem;
+    right: 0.75rem;
+    margin: 0;
+  }
+
+  /* Normal document flow, right after .link-row (below) — holds "right under the
+     pills" regardless of how many links there are or whether they wrap. */
+  .hero-pinzone.mosaic-live .konami-hint--pills {
+    display: block;
+    margin: 0.75rem 0 0;
+    text-align: left;
   }
 
   .hero-copy {
@@ -441,8 +473,7 @@ const TILE_CONFIGS = [
   const frame = document.getElementById('mosaicFrame');
   const heroCopy = document.getElementById('heroCopy');
   const swing = document.getElementById('heroSwing');
-  const konamiHint = document.getElementById('konamiHint');
-  if (!pinzone || !frame || !heroCopy || !swing || !konamiHint) {
+  if (!pinzone || !frame || !heroCopy || !swing) {
     throw new Error('Hero mosaic: expected elements not found');
   }
 
@@ -470,15 +501,7 @@ const TILE_CONFIGS = [
   const SWING_FADE_START = 0.65;
   const SWING_RELEASE_FADE_RANGE = 0.35;
 
-  // The hint text is only ever as visible as (its own hover proximity) x (the
-  // swing's own current scroll-driven visibility) — it can't show at all outside the
-  // swing's own visible window, and even inside that window it needs the cursor
-  // nearby too. Reaches fully opaque (1) at zero distance — per direct feedback, a
-  // capped/translucent max was too hard to read once revealed.
-  const KONAMI_HINT_RADIUS = 90; // px
   let swingVisibility = 0;
-  let hintHoverFactor = 0;
-  let hintTicking = false;
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -486,26 +509,6 @@ const TILE_CONFIGS = [
 
   function easeInOutCubic(t) {
     return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-  }
-
-  function applyKonamiHintOpacity() {
-    konamiHint.style.opacity = (swingVisibility * hintHoverFactor).toFixed(2);
-  }
-
-  function handleHintHover(e) {
-    const clientX = e.clientX;
-    const clientY = e.clientY;
-    if (hintTicking) return;
-    hintTicking = true;
-    requestAnimationFrame(() => {
-      const rect = konamiHint.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      const dist = Math.hypot(clientX - cx, clientY - cy);
-      hintHoverFactor = Math.max(0, 1 - dist / KONAMI_HINT_RADIUS);
-      applyKonamiHintOpacity();
-      hintTicking = false;
-    });
   }
 
   function update() {
@@ -533,7 +536,6 @@ const TILE_CONFIGS = [
     const swingFadeOut = 1 - Math.max(0, Math.min(1, overshoot / SWING_RELEASE_FADE_RANGE));
     swingVisibility = swingFadeIn * swingFadeOut;
     swing.style.opacity = swingVisibility.toFixed(2);
-    applyKonamiHintOpacity();
   }
 
   let liveMode = false;
@@ -557,17 +559,13 @@ const TILE_CONFIGS = [
     if (liveMode) {
       pinzone.classList.add('mosaic-live');
       window.addEventListener('scroll', onScroll, { passive: true });
-      window.addEventListener('mousemove', handleHintHover, { passive: true });
       update();
     } else {
       pinzone.classList.remove('mosaic-live');
       window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('mousemove', handleHintHover);
       frame.removeAttribute('style');
       heroCopy.removeAttribute('style');
       swing.removeAttribute('style');
-      konamiHint.removeAttribute('style');
-      hintHoverFactor = 0;
       for (const t of tileData) t.el.removeAttribute('style');
     }
   }

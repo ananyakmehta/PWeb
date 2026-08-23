@@ -16,9 +16,13 @@ interface Props {
     status: 'ongoing' | 'paused' | 'completed';
     heroImage: { src: string; alt: string };
   };
+  // Fun easter egg, direct instruction: "next to the title... only every other one" —
+  // index.astro decides which cards get true (alternating), rather than this
+  // component guessing its own position in a list it doesn't otherwise know about.
+  showKonamiHint?: boolean;
 }
 
-const { block } = Astro.props;
+const { block, showKonamiHint = false } = Astro.props;
 const heroAsset = getBlockAsset(block.slug, block.heroImage.src);
 const href = withBase(`projects/${block.slug}/`);
 ---
@@ -35,7 +39,19 @@ const href = withBase(`projects/${block.slug}/`);
   </a>
   <div class="card-body">
     <StatusDot status={block.status} />
-    <h3 class="card-title"><a href={href}>{block.title}</a></h3>
+    <h3 class="card-title">
+      <a href={href}>{block.title}</a>
+      {
+        showKonamiHint && (
+          // Nested inside .card-title so it inherits the card's own reveal-animation
+          // opacity (see the shared-base comment in global.css) — can't render even
+          // translucently before the card has slid into view.
+          <p class="konami-hint konami-hint--card" aria-hidden="true">
+            konami code?
+          </p>
+        )
+      }
+    </h3>
     <p class="card-summary">{block.cardSummary}</p>
     <a class="learn-more" href={href}>Learn More →</a>
   </div>
@@ -113,6 +129,17 @@ const href = withBase(`projects/${block.slug}/`);
 
   .card-title a:hover {
     color: var(--accent);
+  }
+
+  /* Inline next to the title rather than a block below it — "next to" per direct
+     instruction. font-size is independent of the title's own 1.4rem (a proportional
+     em-based size here would scale with it awkwardly) and vertical-align nudges it
+     onto the title's own baseline instead of its natural text-top alignment. */
+  .konami-hint--card {
+    display: inline;
+    margin: 0 0 0 0.6rem;
+    font-size: 0.7rem;
+    vertical-align: middle;
   }
 
   .card-summary {

@@ -34,7 +34,14 @@ const otherBlocks = allBlocks
     <Hero />
 
     <section id="projects" class="project-list">
-      {mainBlocks.map((block) => <ProjectCard block={block} />)}
+      {
+        mainBlocks.map((block, i) => (
+          // "next to the title... only every other one" — alternating starting with
+          // the first card, decided here since ProjectCard doesn't otherwise know its
+          // own position in the list.
+          <ProjectCard block={block} showKonamiHint={i % 2 === 0} />
+        ))
+      }
     </section>
 
     {
@@ -111,4 +118,10 @@ const otherBlocks = allBlocks
   // the project detail page's section reveal — see src/lib/scrollReveal.ts.
   import { initScrollReveal } from '../lib/scrollReveal';
   initScrollReveal();
+
+  // Wires up every .konami-hint on this page (the 3 in Hero.astro + one per
+  // alternating project card above) with one shared mousemove listener — see
+  // src/lib/konamiHint.ts.
+  import { initKonamiHints } from '../lib/konamiHint';
+  initKonamiHints();
 </script>

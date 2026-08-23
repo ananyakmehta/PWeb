@@ -98,6 +98,26 @@ a {
   color: inherit;
 }
 
+/* Konami-code hint text, direct instruction: invisible at rest, revealed by cursor
+   proximity via src/lib/konamiHint.ts (shared across every placement rather than
+   duplicating its ~15 lines of hover tracking per instance). This rule is the shared
+   base every instance gets (rest-state invisibility, color, and that it's never a
+   click/selection target); each placement's own scoped CSS adds only positioning.
+   opacity:0 here, not display:none — konamiHint.ts measures each instance's
+   getBoundingClientRect() every mousemove to compute proximity, which needs real
+   layout dimensions to work; display:none would zero those out. Nesting each instance
+   inside whatever ancestor should gate its visibility (e.g. the hero's scroll-faded
+   .swing) is what makes it inherit that ancestor's own opacity too — CSS compounds a
+   child's opacity with its ancestors' automatically, so a hint can't render even
+   translucently outside its ancestor's own visible window without any extra JS to
+   enforce that. */
+.konami-hint {
+  opacity: 0;
+  color: #ffffff;
+  pointer-events: none;
+  user-select: none;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
