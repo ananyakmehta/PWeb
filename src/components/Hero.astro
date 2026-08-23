@@ -119,12 +119,19 @@ const TILE_CONFIGS = [
     <!-- Real, sourced icon — not hand-drawn — per direct instruction: an adult figure
          (not a child), as minimalist as possible — a flat solid silhouette, not
          line-art. "Man Swinging" by Gan Khoon Lay, Noun Project, CC BY 3.0 (credited
-         in Footer.astro). Includes its own A-frame/ropes/seat, so it's a single
-         self-contained decoration, not composited from separate pieces. Black-on
-         -transparent PNG (Noun Project gates SVG behind a paid API), tinted white via
-         CSS filter to read against the dark open background it mostly sits over. -->
+         in Footer.astro). The source icon includes its own A-frame support, which
+         competed with the illusion of hanging from the photo above it — per direct
+         feedback, .swing-crop below crops that out via plain CSS (an oversized,
+         negatively-offset copy of the same unmodified asset inside a fixed, clipped
+         box; see the coordinates comment in the <style> block), keeping only the
+         person, seat, and the short stub of rope nearest the seat — not a second
+         asset, not any pixel-level editing, the exact same source PNG framed
+         differently. That stub is what visually "attaches" to the tile's bottom edge
+         once positioned there. -->
     <div class="swing" id="heroSwing" aria-hidden="true">
-      <Image src={manSwinging} alt="" width={200} height={200} />
+      <div class="swing-crop">
+        <Image src={manSwinging} alt="" width={512} height={512} />
+      </div>
     </div>
 
     <div class="hero-copy" id="heroCopy">
@@ -243,25 +250,53 @@ const TILE_CONFIGS = [
   /* Live mode: top edge pinned to --swingTop, which is exactly the last (bottom-most)
      left-side outline tile's own bottom edge (LAST_SIDE_TILE_BOTTOM in the
      frontmatter, same value that tile's own `outline.top + outline.height` resolves
-     to) — the swing's A-frame top sits right at that seam, "attached" to the image
-     above it, with the whole rest of the icon (frame legs, ropes, seat, figure)
-     hanging down into BOTTOM_GAP's reserved open space below. Opacity set inline by
-     the script: fades in late in the pin phase (paired with the outline finishing
-     forming) and fades back out once you scroll past it. */
+     to) — the cropped rope-stub (see .swing-crop below) sits right at that seam,
+     "attached" to the image above it, with the seat and figure hanging down into
+     BOTTOM_GAP's reserved open space below. Opacity set inline by the script: fades
+     in late in the pin phase (paired with the outline finishing forming) and fades
+     back out once you scroll past it. */
   .hero-pinzone.mosaic-live .swing {
     display: block;
     position: absolute;
     left: 1%;
     top: var(--swingTop);
-    width: 110px;
     z-index: 3;
     opacity: 0;
     pointer-events: none;
   }
 
-  .swing :global(img) {
-    width: 100%;
-    height: auto;
+  /* The crop itself: a fixed, clipped box showing a specific rectangle of the full
+     (unmodified) source icon — everything below is just that source image, scaled up
+     and shifted with negative offsets so the wanted rectangle lands inside this box
+     and everything else (the A-frame) falls outside it and gets clipped. Coordinates
+     were measured directly against the source PNG's own 512x512 pixel grid (crop
+     rect x:175-355, y:255-460 — person + seat + the rope's last stretch down to the
+     seat, no frame pixels anywhere in that rectangle) at a 0.4722 scale factor
+     (85/180, chosen for a similar final on-screen size to the previous full-icon
+     version): container 85x99px, source image rendered at 242x242px and shifted
+     -83px/-120px. Change the scale by changing the container's width/height and
+     recomputing the image size (512 * scale) and offsets (-175 * scale, -255 * scale)
+     together — they're linked, not independent knobs. */
+  .swing-crop {
+    width: 85px;
+    height: 99px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .swing-crop :global(img) {
+    position: absolute;
+    left: -83px;
+    top: -120px;
+    width: 242px;
+    height: 242px;
+    /* global.css sets `img { max-width: 100% }` sitewide, which — being a different
+       property than width, not just lower specificity — still clamps this box's
+       242px width down to its 85px-wide clipping container's own width regardless of
+       the width rule above winning the cascade for `width` itself. Overriding
+       max-width here is what actually lets the image render at its real size before
+       the container clips it down to the intended crop. */
+    max-width: none;
     display: block;
     /* Source PNG is black-on-transparent (Noun Project's export) — forced white to
        read against the dark open background it mostly sits over, rather than tinting
