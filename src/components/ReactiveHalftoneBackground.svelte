@@ -33,6 +33,7 @@
   // trail point is still alive; idle (no recent movement) it draws once and stops,
   // rather than paying every-frame cost for a static picture.
   import { onMount } from 'svelte';
+  import { getRainbowEnabled, onRainbowEnabledChange } from '../lib/staticMode';
 
   let canvas = $state(null);
 
@@ -90,6 +91,12 @@
 
   onMount(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Static mode toggle (top-right corner, StaticModeToggle.svelte) — direct
+    // instruction. Gates the same mousemove-driven reactivity reducedMotion
+    // already gates below, so flipping it off leaves exactly the flat,
+    // rest-state dot grid (no arms, no rainbow reveal) with nothing extra to
+    // special-case in draw() itself.
+    let rainbowEnabled = getRainbowEnabled();
     const ctx = canvas.getContext('2d');
     ctx.lineCap = 'round';
     const styles = getComputedStyle(document.documentElement);
@@ -198,11 +205,23 @@
     }
 
     function handleMove(e) {
+      if (!rainbowEnabled) return;
       const now = performance.now();
       if (now - lastSample > TRAIL_SAMPLE_INTERVAL) {
         lastSample = now;
         trail.push({ x: e.clientX, y: e.clientY, time: now });
         ensureLoopRunning();
+      }
+    }
+
+    function handleRainbowEnabledChange(value) {
+      rainbowEnabled = value;
+      if (!rainbowEnabled) {
+        // Snap straight to rest instead of waiting out the trail's normal
+        // TRAIL_LIFETIME decay — "static" should read as instantly still, not
+        // a slow fade after the toggle's already been flipped off.
+        trail = [];
+        draw(performance.now());
       }
     }
 
@@ -224,6 +243,7 @@
       document.addEventListener('visibilitychange', handleVisibility);
     }
     window.addEventListener('resize', handleResize);
+    const unsubscribeRainbow = onRainbowEnabledChange(handleRainbowEnabledChange);
 
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
@@ -231,6 +251,7 @@
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('visibilitychange', handleVisibility);
+      unsubscribeRainbow();
     };
   });
 </script>
