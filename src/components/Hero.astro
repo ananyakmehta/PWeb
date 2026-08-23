@@ -328,8 +328,9 @@ const TILE_CONFIGS = [
      50px width, so the CENTER lines up rather than the left edge), a small gap below
      it (33px swing height + a few px). Truly invisible at rest (opacity:0, not
      display:none — see the markup comment for why); opacity is driven entirely by
-     handleHintHover() in the script, proximity-based, capped well short of fully
-     opaque ("shows translucently"). pointer-events:none because detection is a
+     handleHintHover() in the script, proximity-based, reaching fully opaque white at
+     close range — per direct feedback, the original dim/translucent-capped version
+     was hard to read once revealed. pointer-events:none because detection is a
      distance check against getBoundingClientRect() in JS, not real :hover — this
      never needs to receive pointer events itself, and staying out of the way means it
      can never block a click on anything near it. */
@@ -342,7 +343,7 @@ const TILE_CONFIGS = [
     margin: 0;
     text-align: center;
     font-size: 0.7rem;
-    color: var(--page-text-dim);
+    color: #ffffff;
     white-space: nowrap;
     z-index: 3;
     opacity: 0;
@@ -472,10 +473,9 @@ const TILE_CONFIGS = [
   // The hint text is only ever as visible as (its own hover proximity) x (the
   // swing's own current scroll-driven visibility) — it can't show at all outside the
   // swing's own visible window, and even inside that window it needs the cursor
-  // nearby too. KONAMI_HINT_MAX_OPACITY caps it well short of 1 even at zero
-  // distance — "shows translucently," not solid text popping in.
+  // nearby too. Reaches fully opaque (1) at zero distance — per direct feedback, a
+  // capped/translucent max was too hard to read once revealed.
   const KONAMI_HINT_RADIUS = 90; // px
-  const KONAMI_HINT_MAX_OPACITY = 0.55;
   let swingVisibility = 0;
   let hintHoverFactor = 0;
   let hintTicking = false;
@@ -489,7 +489,7 @@ const TILE_CONFIGS = [
   }
 
   function applyKonamiHintOpacity() {
-    konamiHint.style.opacity = (swingVisibility * hintHoverFactor * KONAMI_HINT_MAX_OPACITY).toFixed(2);
+    konamiHint.style.opacity = (swingVisibility * hintHoverFactor).toFixed(2);
   }
 
   function handleHintHover(e) {

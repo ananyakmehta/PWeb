@@ -1,10 +1,11 @@
 <script>
   // Fun easter egg, direct instruction. Global keydown listener — works from any page,
-  // not just the hero — watches for the classic Konami code (up up down down left
-  // right left right b a enter). The hint pointing at this ("konami code?", fading in
-  // near the swing on hover) lives on the hero specifically, but the code itself
-  // isn't scoped to being there; that's the traditional way this kind of easter egg
-  // works, and there's nothing hero-specific about the trigger itself.
+  // not just the hero — watches for the Konami code, minus its traditional trailing
+  // "enter" per direct instruction: up up down down left right left right b a. The
+  // hint pointing at this ("konami code?", fading in near the swing on hover) lives
+  // on the hero specifically, but the code itself isn't scoped to being there; that's
+  // the traditional way this kind of easter egg works, and there's nothing
+  // hero-specific about the trigger itself.
   //
   // On a match: darken the whole screen and spin a banana — a real, sourced icon
   // (uxwing.com/banana-icon/, no attribution needed per its license page), not
@@ -30,7 +31,6 @@
     'arrowright',
     'b',
     'a',
-    'enter',
   ];
   const ANIMATION_DURATION = 3200; // ms — must match the <style> keyframes' duration below
 
