@@ -271,25 +271,25 @@ const TILE_CONFIGS = [
      and everything else (the A-frame) falls outside it and gets clipped. Coordinates
      were measured directly against the source PNG's own 512x512 pixel grid (crop
      rect x:175-355, y:255-460 — person + seat + the rope's last stretch down to the
-     seat, no frame pixels anywhere in that rectangle) at a 0.4722 scale factor
-     (85/180, chosen for a similar final on-screen size to the previous full-icon
-     version): container 85x99px, source image rendered at 242x242px and shifted
-     -83px/-120px. Change the scale by changing the container's width/height and
+     seat, no frame pixels anywhere in that rectangle) at a 0.1574 scale factor
+     (28/180 — 1/3 of the original 0.4722 scale, per direct instruction to size it
+     down): container 28x33px, source image rendered at 81x81px and shifted
+     -28px/-40px. Change the scale by changing the container's width/height and
      recomputing the image size (512 * scale) and offsets (-175 * scale, -255 * scale)
      together — they're linked, not independent knobs. */
   .swing-crop {
-    width: 85px;
-    height: 99px;
+    width: 28px;
+    height: 33px;
     overflow: hidden;
     position: relative;
   }
 
   .swing-crop :global(img) {
     position: absolute;
-    left: -83px;
-    top: -120px;
-    width: 242px;
-    height: 242px;
+    left: -28px;
+    top: -40px;
+    width: 81px;
+    height: 81px;
     /* global.css sets `img { max-width: 100% }` sitewide, which — being a different
        property than width, not just lower specificity — still clamps this box's
        242px width down to its 85px-wide clipping container's own width regardless of
