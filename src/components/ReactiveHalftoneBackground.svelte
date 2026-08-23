@@ -33,7 +33,7 @@
   // trail point is still alive; idle (no recent movement) it draws once and stops,
   // rather than paying every-frame cost for a static picture.
   import { onMount } from 'svelte';
-  import { getRainbowEnabled, onRainbowEnabledChange } from '../lib/staticMode';
+  import { getStaticModeEnabled, onStaticModeChange } from '../lib/staticMode';
 
   let canvas = $state(null);
 
@@ -91,12 +91,12 @@
 
   onMount(() => {
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Static mode toggle (top-right corner, StaticModeToggle.svelte) — direct
+    // Static mode toggle (bottom-right corner, StaticModeToggle.svelte) — direct
     // instruction. Gates the same mousemove-driven reactivity reducedMotion
-    // already gates below, so flipping it off leaves exactly the flat,
+    // already gates below, so switching it on leaves exactly the flat,
     // rest-state dot grid (no arms, no rainbow reveal) with nothing extra to
     // special-case in draw() itself.
-    let rainbowEnabled = getRainbowEnabled();
+    let staticModeEnabled = getStaticModeEnabled();
     const ctx = canvas.getContext('2d');
     ctx.lineCap = 'round';
     const styles = getComputedStyle(document.documentElement);
@@ -205,7 +205,7 @@
     }
 
     function handleMove(e) {
-      if (!rainbowEnabled) return;
+      if (staticModeEnabled) return;
       const now = performance.now();
       if (now - lastSample > TRAIL_SAMPLE_INTERVAL) {
         lastSample = now;
@@ -214,12 +214,12 @@
       }
     }
 
-    function handleRainbowEnabledChange(value) {
-      rainbowEnabled = value;
-      if (!rainbowEnabled) {
+    function handleStaticModeChange(value) {
+      staticModeEnabled = value;
+      if (staticModeEnabled) {
         // Snap straight to rest instead of waiting out the trail's normal
         // TRAIL_LIFETIME decay — "static" should read as instantly still, not
-        // a slow fade after the toggle's already been flipped off.
+        // a slow fade after the toggle's already been flipped on.
         trail = [];
         draw(performance.now());
       }
@@ -243,7 +243,7 @@
       document.addEventListener('visibilitychange', handleVisibility);
     }
     window.addEventListener('resize', handleResize);
-    const unsubscribeRainbow = onRainbowEnabledChange(handleRainbowEnabledChange);
+    const unsubscribeStaticMode = onStaticModeChange(handleStaticModeChange);
 
     return () => {
       if (rafId) cancelAnimationFrame(rafId);
@@ -251,7 +251,7 @@
       window.removeEventListener('mousemove', handleMove);
       window.removeEventListener('resize', handleResize);
       document.removeEventListener('visibilitychange', handleVisibility);
-      unsubscribeRainbow();
+      unsubscribeStaticMode();
     };
   });
 </script>
