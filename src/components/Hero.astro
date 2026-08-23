@@ -108,8 +108,8 @@ const TILE_CONFIGS = [
 ];
 ---
 
-<div class="hero-pinzone" id="heroPinzone">
-  <div class="hero-sticky">
+<div class="hero-pinzone" id="heroPinzone" data-top-h={TOP_H} data-c-bottom={C_BOTTOM}>
+  <div class="hero-sticky" id="heroSticky">
     <div class="mosaic-frame" id="mosaicFrame">
       {
         TILE_CONFIGS.map((t) => (
@@ -161,7 +161,7 @@ const TILE_CONFIGS = [
            corner (inside the outline's top/right bands, not overlapping them). -->
       <p class="konami-hint konami-hint--corner" aria-hidden="true">konami code?</p>
 
-      <div class="hero-copy-inner">
+      <div class="hero-copy-inner" id="heroCopyInner">
         <h1>Hi, I'm [Name] — placeholder hero copy.</h1>
         <p class="filler">
           [Placeholder text] Line two of the filler bio goes here, casual in tone rather
@@ -232,21 +232,24 @@ const TILE_CONFIGS = [
   }
 
   /* JS-enhanced state (class added by the script below, only when motion is allowed
-     and the viewport is wide enough): tall scroll runway + sticky pin. Unlike the
-     previous banner version, the frame itself never resizes — it's full-viewport for
-     the entire pinned duration (see .mosaic-frame below); only the tiles inside it
-     move, from the mosaic arrangement to the outline arrangement. That also means the
-     sticky box's own height can just be 100vh again (no drift risk between a
-     JS-computed height and this CSS value like the old banner version had to manage —
-     there's nothing to compute, this box's content always fills it exactly). */
+     and the viewport is wide enough): tall scroll runway + sticky pin. The frame
+     itself never resizes — it's full-viewport for the entire pinned duration (see
+     .mosaic-frame below); only the tiles inside it move, from the mosaic arrangement
+     to the outline arrangement. Both heights below are placeholders, immediately
+     overridden by inline styles the script sets in the same synchronous call that
+     adds this class (see computeStickyHeight() in the script) — the real values live
+     there, as the single source of truth (measured from the outline's own geometry
+     and the actual rendered text, not assumed), not here. Kept here only as a
+     same-ballpark fallback for the imperceptibly brief instant before that inline
+     style lands. */
   .hero-pinzone.mosaic-live {
-    height: 200vh;
+    height: calc(100vh + 70vh);
   }
 
   .hero-pinzone.mosaic-live .hero-sticky {
     position: sticky;
     top: 0;
-    height: 100vh;
+    height: 70vh;
     overflow: hidden;
   }
 
@@ -480,12 +483,20 @@ const TILE_CONFIGS = [
   // viewport-height math is exactly the kind of thing that gets unreliable on mobile
   // Safari's address-bar-driven 100vh changes, so it isn't worth chasing there).
   const pinzone = document.getElementById('heroPinzone');
+  const heroSticky = document.getElementById('heroSticky');
   const frame = document.getElementById('mosaicFrame');
   const heroCopy = document.getElementById('heroCopy');
+  const heroCopyInner = document.getElementById('heroCopyInner');
   const swing = document.getElementById('heroSwing');
-  if (!pinzone || !frame || !heroCopy || !swing) {
+  if (!pinzone || !heroSticky || !frame || !heroCopy || !heroCopyInner || !swing) {
     throw new Error('Hero mosaic: expected elements not found');
   }
+
+  // TOP_H/C_BOTTOM from the frontmatter, read back via data attributes (Astro's
+  // define:vars only works on <style> tags, not <script> ones) — see
+  // computeStickyHeight() below for why this component needs them at runtime too.
+  const topH = Number(pinzone.dataset.topH);
+  const cBottom = Number(pinzone.dataset.cBottom);
 
   const tiles = Array.from(frame.querySelectorAll('.mosaic-tile'));
   const tileData = tiles.map((el) => ({
@@ -512,6 +523,28 @@ const TILE_CONFIGS = [
   const SWING_RELEASE_FADE_RANGE = 0.35;
 
   let swingVisibility = 0;
+  let stickyHeightPx = 0;
+
+  // .hero-sticky's own height governs two things: how long CSS position:sticky keeps
+  // it pinned before releasing (tied to this element's own height, not the JS
+  // progress math below), and — once released — how much further scroll it takes for
+  // the (now unstuck, normally-scrolling) box to fully clear the viewport and reveal
+  // the projects grid that follows it in the DOM. A flat 100vh here (this component's
+  // very first version) meant that distance was always a full screen regardless of
+  // how much of that screen the pinned content actually used — fine when the outline
+  // filled the whole viewport, but once the outline's own footprint shrank (see
+  // C_BOTTOM's own comment) there was empty space below the real content the whole
+  // time, which read as a big gap before the projects grid appeared. Measuring the
+  // REAL content here — rather than assuming a fixed height — is what keeps this
+  // correct regardless of how long the eventual real bio text ends up being, not just
+  // today's placeholder: takes the taller of (the outline's own bottom edge, plus
+  // room for the swing hanging below it) and (where the text starts, plus its own
+  // real rendered height, plus a little breathing room).
+  function computeStickyHeight() {
+    const outlineBottomPx = (cBottom / 100) * window.innerHeight + 110;
+    const textBottomPx = (topH / 100) * window.innerHeight + heroCopyInner.offsetHeight + 80;
+    return Math.max(outlineBottomPx, textBottomPx);
+  }
 
   function lerp(a, b, t) {
     return a + (b - a) * t;
@@ -523,7 +556,7 @@ const TILE_CONFIGS = [
 
   function update() {
     const rect = pinzone.getBoundingClientRect();
-    const scrollableHeight = pinzone.offsetHeight - window.innerHeight;
+    const scrollableHeight = pinzone.offsetHeight - stickyHeightPx;
     // Unclamped: needed both for progress (0-1, the pin/outline phase) and for how far
     // *past* 1 we are once the pin has released (the release phase) — see overshoot
     // below, which drives the swing's fade-out.
@@ -561,6 +594,17 @@ const TILE_CONFIGS = [
     }
   }
 
+  // Single source of truth for both heights — see computeStickyHeight() above. Set
+  // here, synchronously, so the CSS class's own placeholder values (in <style>) are
+  // never actually visible; also re-run on resize while already live, since either
+  // dimension it depends on (viewport height directly, viewport width indirectly via
+  // text reflow) can change without a live/fallback mode switch happening at all.
+  function applyStickyHeight() {
+    stickyHeightPx = computeStickyHeight();
+    pinzone.style.height = `calc(100vh + ${stickyHeightPx}px)`;
+    heroSticky.style.height = `${stickyHeightPx}px`;
+  }
+
   function syncMode() {
     const shouldBeLive = motionOk() && widthOk();
     if (shouldBeLive === liveMode) return;
@@ -568,11 +612,14 @@ const TILE_CONFIGS = [
 
     if (liveMode) {
       pinzone.classList.add('mosaic-live');
+      applyStickyHeight();
       window.addEventListener('scroll', onScroll, { passive: true });
       update();
     } else {
       pinzone.classList.remove('mosaic-live');
       window.removeEventListener('scroll', onScroll);
+      pinzone.style.removeProperty('height');
+      heroSticky.style.removeProperty('height');
       frame.removeAttribute('style');
       heroCopy.removeAttribute('style');
       swing.removeAttribute('style');
@@ -582,7 +629,12 @@ const TILE_CONFIGS = [
 
   syncMode();
   window.addEventListener('resize', () => {
+    const wasLive = liveMode;
     syncMode();
+    // syncMode() only touches the sticky height when live mode is *entered*; if it
+    // was already live before and after this resize, it wouldn't otherwise re-run —
+    // do it explicitly here so viewport-height and text-reflow changes stay correct.
+    if (liveMode && wasLive) applyStickyHeight();
     if (liveMode) update();
   });
   window
