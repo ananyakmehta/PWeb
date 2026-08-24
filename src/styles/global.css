@@ -48,6 +48,13 @@
   --status-completed: #4ad991;
   --status-paused: #e0b23c;
 
+  /* "Nerd numbers" collapsible-aside text (NerdNumbers.svelte) — direct instruction:
+     a very light blue, visibly distinct from the regular white/dim body text, used
+     for both the toggle label and its collapsible content everywhere that component
+     appears across any project's detail page. */
+  --nerd-blue: #aad4ff;
+  --nerd-blue-hover: #cbe4ff;
+
   /*
    * Display face is Raleway (swapped from Arvo per direct instruction; loaded below
    * via Google Fonts, weights 400/600/700), used with restraint on titles/headings/nav

@@ -21,8 +21,10 @@
 // fits naturally and there was no reason to discard working content.
 import { Image } from 'astro:assets';
 import StatusDot from './StatusDot.svelte';
+import NerdNumbers from './NerdNumbers.svelte';
 import { getBlockAsset } from '../lib/blockAssets';
 import { withBase } from '../lib/url';
+import { splitParagraphs } from '../lib/text';
 import section1 from '../assets/sections/1.svg';
 import section2 from '../assets/sections/2.svg';
 import section3 from '../assets/sections/3.svg';
@@ -38,41 +40,51 @@ const heroAsset = getBlockAsset(block.slug, block.heroImage.src);
 const dateRange = `${block.dateStart} – ${block.dateEnd ?? 'Ongoing'}`;
 const allTags = [...block.typeTags, ...block.topicTags];
 
-// Placeholder content — same 4 sections for every project this pass, alternating
-// image side starting with image-right/text-left per the direct instruction.
-const SECTIONS = [
+// Placeholder content — used only for projects that don't have real `sections` in
+// their frontmatter yet (see detailSectionSchema in src/content.config.ts), same 4
+// sections for every such project, alternating image side starting with
+// image-right/text-left per the original direct instruction.
+const PLACEHOLDER_SECTIONS = [
   {
     heading: '[Placeholder] Section One',
     body: '[Placeholder copy] Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua — standing in for the real section copy.',
-    image: section1,
-    side: 'right',
   },
   {
     heading: '[Placeholder] Section Two',
     body: '[Placeholder copy] Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat — standing in for the real section copy.',
-    image: section2,
-    side: 'left',
   },
   {
     heading: '[Placeholder] Section Three',
     body: '[Placeholder copy] Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur — standing in for the real section copy.',
-    image: section3,
-    side: 'right',
   },
   {
     heading: '[Placeholder] Section Four',
     body: '[Placeholder copy] Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum — standing in for the real section copy.',
-    image: section4,
-    side: 'left',
   },
 ];
+
+// Decorative side images/alternation are independent of whether the text is real or
+// placeholder — no real per-section images exist yet (see the .md source this content
+// came from, which specifies text only), so real-content sections reuse the same
+// generic placeholder art in the same alternating pattern rather than going without.
+const SECTION_IMAGES = [section1, section2, section3, section4];
+const SECTION_SIDES = ['right', 'left', 'right', 'left'];
+
+const sectionContent = block.sections?.length > 0 ? block.sections : PLACEHOLDER_SECTIONS;
+const SECTIONS = sectionContent.map((s: any, i: number) => ({
+  ...s,
+  image: SECTION_IMAGES[i % SECTION_IMAGES.length],
+  side: SECTION_SIDES[i % SECTION_SIDES.length],
+}));
 ---
 
 <article class="project-detail">
   <div class="detail-hero">
     <Image src={heroAsset} alt={block.heroImage.alt} width={1800} height={900} class="detail-hero-image" />
     <div class="detail-hero-overlay">
-      <h1>{block.title}</h1>
+      <div class="detail-hero-overlay-inner">
+        <h1>{block.title}</h1>
+      </div>
     </div>
   </div>
 
@@ -92,7 +104,11 @@ const SECTIONS = [
       )
     }
 
-    <p class="description">{block.primaryDescription}</p>
+    {
+      splitParagraphs(block.primaryDescription).map((p: string) => (
+        <p class="description">{p}</p>
+      ))
+    }
 
     <div class="sections">
       {
@@ -103,7 +119,12 @@ const SECTIONS = [
             </div>
             <div class="detail-section-text">
               <h2>{s.heading}</h2>
-              <p>{s.body}</p>
+              {splitParagraphs(s.body).map((p: string) => (
+                <p>{p}</p>
+              ))}
+              {s.nerdNumbers && (
+                <NerdNumbers client:load paragraphs={splitParagraphs(s.nerdNumbers)} />
+              )}
             </div>
           </div>
         ))
@@ -127,6 +148,18 @@ const SECTIONS = [
 <style>
   .project-detail {
     padding-bottom: 4rem;
+    /* Single source of truth for the content column's width/inset, shared by
+       .detail-body below AND .detail-hero-overlay-inner (the full-bleed hero title,
+       which otherwise has no relationship to .detail-body's own width) — direct
+       instruction that the "Torque ML Project" heading line up with the intro
+       text's own left edge. Using the exact same max-width + auto-margin +
+       padding-left recipe in both places, off one shared pair of values, is what
+       keeps them aligned at every viewport width automatically rather than only at
+       whatever width they happened to be measured against.
+       max-width was 1000px, padding-h was 1.5rem — per direct instruction to cut
+       the side margins roughly in half and let content use more of the screen. */
+    --detail-max-width: 1300px;
+    --detail-pad-h: 0.75rem;
   }
 
   /* Full-bleed, matching the index hero mosaic's own breakout — the detail page's
@@ -154,7 +187,17 @@ const SECTIONS = [
     display: flex;
     align-items: flex-end;
     background: linear-gradient(to top, rgba(4, 8, 14, 0.75), rgba(4, 8, 14, 0.15) 55%, rgba(4, 8, 14, 0.35));
-    padding: 2.5rem;
+    padding-bottom: 2.5rem;
+  }
+
+  /* Horizontal alignment lives here instead of on .detail-hero-overlay itself — same
+     max-width/auto-margin/padding as .detail-body (via the shared vars above), so
+     the title's left edge always lands exactly on the intro text's own left edge. */
+  .detail-hero-overlay-inner {
+    width: 100%;
+    max-width: var(--detail-max-width);
+    margin: 0 auto;
+    padding: 0 var(--detail-pad-h);
   }
 
   .detail-hero-overlay h1 {
@@ -165,9 +208,24 @@ const SECTIONS = [
   }
 
   .detail-body {
-    max-width: 1000px;
+    max-width: var(--detail-max-width);
     margin: 0 auto;
-    padding: 2rem 1.5rem 0;
+    padding: 2rem var(--detail-pad-h) 0;
+    /* Slide-in scroll-reveal sections (see src/lib/scrollReveal.ts, and .sections
+       below) sit translateX()'d up to 36px off their resting position until they
+       scroll into view — meant to be just off-screen, not an actual
+       horizontally-scrollable page. Narrowing this page's own side margins above
+       left less slack for that, producing a real if transient horizontal
+       scrollbar at medium viewport widths whenever an off-screen section was
+       still in its pre-reveal state. Scoped to .detail-body specifically, not
+       .project-detail or body/html: .detail-hero (a sibling of this element, not
+       a descendant) relies on overflowing ITS OWN container via negative margins
+       for its full-bleed edge-to-edge effect, which overflow-x:hidden anywhere
+       above it in the tree would clip — and overflow-x:hidden on any ancestor of
+       a position:sticky element (the index page's pinned hero mosaic, on an
+       entirely different route from this one, but body/html are ancestors of
+       both) disables that element's stickiness. Confirmed both the hard way. */
+    overflow-x: hidden;
   }
 
   .meta-row {
@@ -201,8 +259,19 @@ const SECTIONS = [
   .description {
     color: var(--page-text);
     line-height: 1.6;
-    max-width: 65ch;
+    /* Widened from 65ch alongside .detail-body's own max-width increase — per direct
+       instruction that the TEXT itself take up more of the screen, not just the
+       (now wider) empty space around it. Still capped, short of .detail-body's full
+       width, so paragraph lines don't get uncomfortably long to read. */
+    max-width: 80ch;
+    /* primaryDescription can now be multiple paragraphs (see splitParagraphs()),
+       each its own .description <p> — the first needs the full gap down from the
+       tags row above it, consecutive ones just need normal paragraph spacing. */
     margin: 1rem 0 0;
+  }
+
+  .description + .description {
+    margin-top: 0.85rem;
   }
 
   .sections {
@@ -240,6 +309,13 @@ const SECTIONS = [
     margin: 0;
     color: var(--page-text-dim);
     line-height: 1.6;
+  }
+
+  /* Section body can now be multiple paragraphs (see splitParagraphs()) — normal
+     paragraph spacing between them, none needed above the first (h2 already has its
+     own bottom margin). */
+  .detail-section-text p + p {
+    margin-top: 0.85rem;
   }
 
   /* Same slide-in as the index page's project cards (§ ProjectCard.astro) — direction

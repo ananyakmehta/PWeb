@@ -53,6 +53,21 @@ const subItemSchema = z.object({
   links: z.array(linkSchema).optional(),
 });
 
+const detailSectionSchema = z.object({
+  // Real per-project detail-page sections (ProjectDetail.astro's 4-slot alternating
+  // image/text layout) — see the `sections` field below for how these plug in.
+  heading: z.string(),
+  // Multi-paragraph: split on blank lines by src/lib/text.ts's splitParagraphs(),
+  // same convention markdown itself uses, since a YAML scalar has no other way to
+  // mark paragraph breaks.
+  body: z.string(),
+  // Optional collapsible aside for extra detail/stats — rendered in a distinct
+  // color from the regular body text via NerdNumbers.svelte, default retracted.
+  // Not every section has one; direct instruction was for this to scale to any
+  // project's sections, not just be special-cased for one.
+  nerdNumbers: z.string().optional(),
+});
+
 const blockSchema = z.object({
   title: z.string(),
   slug: z.string(), // becomes the /projects/<slug> URL
@@ -71,6 +86,13 @@ const blockSchema = z.object({
   primaryDescription: z.string(),
   award: z.string().optional(),
   links: z.array(linkSchema).optional(),
+  // Real content for ProjectDetail.astro's alternating image/text section layout —
+  // see detailSectionSchema above. Optional and all-or-nothing: a project with no
+  // `sections` at all still gets that component's own placeholder SECTIONS (so
+  // every existing block keeps rendering exactly as before until it's given real
+  // section text); a project that has any entries here uses exactly those instead,
+  // however many there are (1-4), not a mix of real and placeholder slots.
+  sections: z.array(detailSectionSchema).max(4).optional(),
   subItems: z.array(subItemSchema).optional(),
   images: z.array(imageSchema).max(3).optional(), // supplementary, detail page only; up to 3, must gracefully handle 1, 2, or 3
   heroImage: imageSchema, // required — dominant visual on the index card and top of the detail page (DD_v2 §3.1)
