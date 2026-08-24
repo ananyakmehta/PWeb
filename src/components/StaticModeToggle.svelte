@@ -58,20 +58,19 @@
        z-index:1) without needing to dodge anything the way the top corner did
        with Nav.astro's own icon row. padding+the smaller bottom/right offset
        together enlarge the clickable box while keeping the visible switch pill at
-       the exact same on-screen spot as a bare 2.25rem/2.25rem inset with no
+       the exact same on-screen spot as a bare 1.75rem/1.75rem inset with no
        padding would have put it (bottom/right + padding, below, sum to that). */
     position: fixed;
-    bottom: 1.5rem;
-    right: 1.5rem;
+    bottom: 1.15rem;
+    right: 1.15rem;
     z-index: 50;
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    /* Every dimension in this component (padding, gap, font sizes, the switch
-       itself) is 3/2 of its previous value, per direct instruction to size the
-       whole control up — a uniform scale rather than enlarging just the text or
-       just the switch on its own. */
-    padding: 1.05rem 0.75rem;
+    gap: 0.6rem;
+    /* Dialed back down from an earlier 3/2 scale-up — per direct feedback that
+       came out too big — to roughly 1.15x of the original size instead: still a
+       bit larger than before, well short of the previous 1.5x pass. */
+    padding: 0.8rem 0.6rem;
     margin: 0;
     border: none;
     border-radius: 999px;
@@ -89,19 +88,19 @@
   .label-group {
     display: flex;
     flex-direction: column;
-    gap: 0.225rem;
+    gap: 0.18rem;
     user-select: none;
   }
 
   .label {
-    font-size: 0.975rem;
+    font-size: 0.75rem;
     letter-spacing: 0.04em;
     text-transform: uppercase;
     color: var(--page-text-dim);
   }
 
   .sublabel {
-    font-size: 0.87rem;
+    font-size: 0.68rem;
     letter-spacing: 0.02em;
     color: var(--page-text-dim);
     opacity: 0.65;
@@ -109,8 +108,8 @@
 
   .switch-track {
     position: relative;
-    width: 45px;
-    height: 25.5px;
+    width: 34px;
+    height: 19px;
     flex-shrink: 0;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 999px;
@@ -125,23 +124,23 @@
 
   .thumb {
     position: absolute;
-    top: 1.5px;
-    left: 1.5px;
-    width: 19.5px;
-    height: 19.5px;
+    top: 1px;
+    left: 1px;
+    width: 15px;
+    height: 15px;
     border-radius: 50%;
     background: var(--page-text);
     transition: transform 150ms ease;
   }
 
   .thumb.on {
-    transform: translateX(19.5px);
+    transform: translateX(17px);
   }
 
   @media (max-width: 640px) {
     .static-mode-toggle {
-      bottom: 0.375rem;
-      right: 0.375rem;
+      bottom: 0.3rem;
+      right: 0.3rem;
     }
 
     .label-group {
